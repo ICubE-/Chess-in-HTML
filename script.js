@@ -82,25 +82,23 @@ class Game {
 	createPieceTemplate(color, type) {
 		// color: 'wh', 'bl'
 		// type: 'k', 'q', 'r', 'b', 'n', 'p'
-		let piece = document.createElement('div');
-		piece.classList.add('piece', color, type);
-		return piece;
-	}
-	placePieceUI(pieceTemplate, row, col) {
-		let pieceUI = pieceTemplate.cloneNode(true);
-		pieceUI.classList.add('square-' + row + col);
-		this.boardUI.appendChild(pieceUI);
-		return pieceUI;
+		let pieceTemplate = document.createElement('div');
+		pieceTemplate.classList.add('piece', color, type);
+		return pieceTemplate;
 	}
 	placePieceUI(piece, row, col) {
 		let pieceUI = this.createPieceTemplate(piece.color, piece.type);
 		pieceUI.classList.add('square-' + row + col);
+		pieceUI.addEventListener(
+			'click', 
+			function(){ game.onPieceClick(pieceUI.classList[3]); }
+		);
 		this.boardUI.appendChild(pieceUI);
 		return pieceUI;
 	}
 	start() {
 		this.clearBoardUI();
-		this.logic.initBoard();		
+		this.logic.initBoard();	
 		for (let i = 0; i < 8; i++) {
             for (let j = 0; j < 8; j++) {
                 if(this.logic.board[i][j] != null) {
@@ -109,11 +107,30 @@ class Game {
             }
         }
 	}
-    onBlankClick() {}
-	onPieceClick() {
-		
+    onBlankClick() {
+		// remove selected piece highlight
+		// remove paths
+		this.selectedPiece.classList.remove('hhhhh');
+		this.selectedPiece = null;
 	}
-	onPathClick() {}
+	onPieceClick(squareNum) {/*
+		if(this.selectedPiece == null)
+		if(this.selectedPiece.classList[3] == squareNum) {
+			this.onBlankClick();
+		} else {
+			this.selectedPiece = this.boardUI.getElementsByClassName('piece ' + squareNum)[0];
+			this.selectedPiece.classList.add('hhhhh');
+			// create selected piece highlight
+			// create paths
+		}*/
+	}
+	onPathClick() {
+		// move selected piece to path
+		// remove selected piece highlight
+		// remove paths
+		// create previous move highlight
+		this.selectedPiece = null;
+	}
 }
 
 var game = new Game();

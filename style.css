@@ -73,6 +73,7 @@ body {
 .piece.p::after {
     content: '\265F';
 }
+.piece.hhhhh{background-color: #0000ff;}
 .square-00 { transform: translate(0, 700%); }
 .square-01 { transform: translate(0, 600%); }
 .square-02 { transform: translate(0, 500%); }
