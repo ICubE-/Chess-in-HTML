@@ -20,7 +20,10 @@ body {
     z-index: 0;
 }
 .cell {
-    text-align: center;
+	width: 12.5%;
+    height: 12.5%;
+    position: absolute;
+    z-index: 0;
 	cursor: default;
 }
 .cell-light {
@@ -30,6 +33,10 @@ body {
 .cell-dark {
     background-color: #779556;
     color: #ebecd0;
+}
+.cell-highlight::after {
+	content: linear-gradient(0, #ffff00, #ffff00);
+	opacity: 50%;
 }
 .piece {
     width: 12.5%;
@@ -47,24 +54,24 @@ body {
     text-align: center;
     margin-top: calc(var(--cell-size) * -0.05);
 }
-.piece.wh:after {
+.piece.wh::after {
     color: white;
     text-shadow: black 0 0 5px;
 }
-.piece.bl:after {
+.piece.bl::after {
     color: black;
     text-shadow: white 0 0 5px;
 }
 .piece.k::after {
     content: '\265A';
 }
-.piece.q:after {
+.piece.q::after {
     content: '\265B';
 }
 .piece.r::after {
     content: '\265C';
 }
-.piece.b:after {
+.piece.b::after {
     content: '\265D';
 }
 .piece.n::after {
@@ -73,7 +80,6 @@ body {
 .piece.p::after {
     content: '\265F';
 }
-.piece.hhhhh{background-color: #0000ff;}
 .square-00 { transform: translate(0, 700%); }
 .square-01 { transform: translate(0, 600%); }
 .square-02 { transform: translate(0, 500%); }

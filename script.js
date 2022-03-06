@@ -1,7 +1,7 @@
 class Piece {
     constructor(color, type) {
-        // color: "wh", "bl"
-        // type: "k", "q", "r", "b", "n", "p"
+        // color: 'wh', 'bl'
+        // type: 'k', 'q', 'r', 'b', 'n', 'p'
         this.color = color;
         this.type = type;
     }
@@ -9,7 +9,7 @@ class Piece {
 
 class ChessLogic {
     constructor() {
-		// making clear board
+        // making clear board
         this.board = new Array();
         for (let i = 0; i < 8; i++) {
             let r = new Array();
@@ -19,8 +19,8 @@ class ChessLogic {
             this.board.push(r);
         }
     }
-	initBoard() {
-		this.board[0][0] = new Piece('wh', 'r');
+    initBoard() {
+        this.board[0][0] = new Piece('wh', 'r');
         this.board[1][0] = new Piece('wh', 'n');
         this.board[2][0] = new Piece('wh', 'b');
         this.board[3][0] = new Piece('wh', 'q');
@@ -52,85 +52,139 @@ class ChessLogic {
         this.board[5][7] = new Piece('bl', 'b');
         this.board[6][7] = new Piece('bl', 'n');
         this.board[7][7] = new Piece('bl', 'r');
+    }
+	getCoords(color, type) {
+		// color: 'wh', 'bl'
+        // type: 'k', 'q', 'r', 'b', 'n', 'p'
+		let coords = new Array();
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+				let pc = this.board[i][j];
+                if(pc != null && pc.color == color && pc.type == type) {
+					coords.push(i.toString() + j.toString());
+				}
+            }
+        }
+		return coords;
+	}
+	getThreateningCells(coord) {
+		let threateningCells = new Array();
+		let pc = this.board[coord[0], coord[1]];
+		if(pc == null) return weakMovableCells;
+		else(pc.type == 'k')
+		
+	}
+	isChecked(color) {
+		// color: 'wh', 'bl'
+		let kingCoord = this.getCoords(color, 'k')[0];
+		let opposite = (color == 'wh')? 'bl' : 'wh';
+		return false;
+	}
+	isCheckMated() {
+		return false;
+	}
+	getMovableCells(coord) {
+		
 	}
 }
 
 class Game {
     constructor() {
         this.logic = new ChessLogic();
-		this.boardUI = document.getElementsByClassName('board')[0];
-		this.wk = this.createPieceTemplate('wh', 'k');
-		this.wq = this.createPieceTemplate('wh', 'q');
-		this.wr = this.createPieceTemplate('wh', 'r');
-		this.wb = this.createPieceTemplate('wh', 'b');
-		this.wn = this.createPieceTemplate('wh', 'n');
-		this.wp = this.createPieceTemplate('wh', 'p');
-		this.bk = this.createPieceTemplate('bl', 'k');
-		this.bq = this.createPieceTemplate('bl', 'q');
-		this.br = this.createPieceTemplate('bl', 'r');
-		this.bb = this.createPieceTemplate('bl', 'b');
-		this.bn = this.createPieceTemplate('bl', 'n');
-		this.bp = this.createPieceTemplate('bl', 'p');
-		this.selectedPiece = null;
+        this.boardUI = document.getElementsByClassName('board')[0];
+		this.boardBGUI = this.boardUI.getElementsByClassName('board-bg')[0];
+		this.boardPCSUI = this.boardUI.getElementsByClassName('board-pcs')[0];
+        this.wk = this.createPieceTemplate('wh', 'k');
+        this.wq = this.createPieceTemplate('wh', 'q');
+        this.wr = this.createPieceTemplate('wh', 'r');
+        this.wb = this.createPieceTemplate('wh', 'b');
+        this.wn = this.createPieceTemplate('wh', 'n');
+        this.wp = this.createPieceTemplate('wh', 'p');
+        this.bk = this.createPieceTemplate('bl', 'k');
+        this.bq = this.createPieceTemplate('bl', 'q');
+        this.br = this.createPieceTemplate('bl', 'r');
+        this.bb = this.createPieceTemplate('bl', 'b');
+        this.bn = this.createPieceTemplate('bl', 'n');
+        this.bp = this.createPieceTemplate('bl', 'p');
+        this.selectedPiece = null;
+		this.turn = ''; // 'wh': white, 'bl': black
     }
-	clearBoardUI() {
-		let pieceUIs = this.boardUI.getElementsByClassName('piece');
-		while(pieceUIs.length > 0) {
-			pieceUIs[0].remove();
-		}
-	}
-	createPieceTemplate(color, type) {
-		// color: 'wh', 'bl'
-		// type: 'k', 'q', 'r', 'b', 'n', 'p'
-		let pieceTemplate = document.createElement('div');
-		pieceTemplate.classList.add('piece', color, type);
-		return pieceTemplate;
-	}
-	placePieceUI(piece, row, col) {
-		let pieceUI = this.createPieceTemplate(piece.color, piece.type);
-		pieceUI.classList.add('square-' + row + col);
-		pieceUI.addEventListener(
-			'click', 
-			function(){ game.onPieceClick(pieceUI.classList[3]); }
-		);
-		this.boardUI.appendChild(pieceUI);
-		return pieceUI;
-	}
-	start() {
-		this.clearBoardUI();
-		this.logic.initBoard();	
-		for (let i = 0; i < 8; i++) {
+    clearBoardUI() {
+        let highlightedCells = this.boardUI.getElementsByClassName('cell cell-highlight');
+        while (highlightedCells.length > 0) {
+            highlightedCells[0].classList.remove('cell-highlight');
+        }
+        let pieceUIs = this.boardUI.getElementsByClassName('piece');
+        while (pieceUIs.length > 0) {
+            pieceUIs[0].remove();
+        }
+    }
+    createPieceTemplate(color, type) {
+        // color: 'wh', 'bl'
+        // type: 'k', 'q', 'r', 'b', 'n', 'p'
+        let pieceTemplate = document.createElement('div');
+        pieceTemplate.classList.add('piece', color, type);
+        return pieceTemplate;
+    }
+    placePieceUI(piece, row, col) {
+        let pieceUI = this.createPieceTemplate(piece.color, piece.type);
+        pieceUI.classList.add('square-' + row + col);
+        pieceUI.addEventListener('click', function () {
+            game.onPieceClick(pieceUI.classList[3]);
+        });
+        this.boardPCSUI.appendChild(pieceUI);
+        return pieceUI;
+    }
+    start() {
+        this.clearBoardUI();
+        this.logic.initBoard();
+        for (let i = 0; i < 8; i++) {
             for (let j = 0; j < 8; j++) {
-                if(this.logic.board[i][j] != null) {
-					this.placePieceUI(this.logic.board[i][j], i, j);
-				}
+                if (this.logic.board[i][j] != null) {
+                    this.placePieceUI(this.logic.board[i][j], i, j);
+                }
             }
         }
-	}
+		this.selectedPiecet = null;
+		this.turn = 'wh';
+    }
     onBlankClick() {
-		// remove selected piece highlight
-		// remove paths
-		this.selectedPiece.classList.remove('hhhhh');
-		this.selectedPiece = null;
-	}
-	onPieceClick(squareNum) {/*
-		if(this.selectedPiece == null)
-		if(this.selectedPiece.classList[3] == squareNum) {
+        if (this.selectedPiece == null) return;
+        // remove selected piece highlight
+        let squareNum = this.selectedPiece.classList[3];
+        let hCell = this.boardUI.getElementsByClassName('cell ' + squareNum)[0];
+        hCell.classList.remove('cell-highlight');
+        // remove paths (WIP)
+        this.selectedPiece = null;
+    }
+    onPieceClick(squareNum) {
+		// handling the case of same-piece-clicking
+		if(this.selectedPiece != null && this.selectedPiece.classList[3] == squareNum) {
 			this.onBlankClick();
-		} else {
-			this.selectedPiece = this.boardUI.getElementsByClassName('piece ' + squareNum)[0];
-			this.selectedPiece.classList.add('hhhhh');
-			// create selected piece highlight
-			// create paths
-		}*/
-	}
-	onPathClick() {
-		// move selected piece to path
-		// remove selected piece highlight
-		// remove paths
-		// create previous move highlight
-		this.selectedPiece = null;
-	}
+			return;
+		}
+		// cancel selection
+        this.onBlankClick();
+		let clickedPiece = this.boardUI.getElementsByClassName('piece ' + squareNum)[0];
+		// handling the turn
+		if(!(this.turn == clickedPiece.classList[1])) {
+			return;
+		}
+        this.selectedPiece = clickedPiece;
+		// create selected piece highlight
+		let hCell = this.boardUI.getElementsByClassName('cell ' + squareNum)[0];
+        hCell.classList.add('cell-highlight');
+        // create paths
+		this.logic.getMovableCells(squareNum[7] + squareNum[8]);
+		// ....wip
+    }
+    onPathClick() {
+        // move selected piece to path
+        // remove selected piece highlight
+        // remove paths
+        // create previous move highlight
+        this.selectedPiece = null;
+    }
 }
 
 var game = new Game();
