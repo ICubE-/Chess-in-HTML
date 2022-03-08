@@ -7,10 +7,19 @@ class Piece {
     }
 }
 
+class Coord {
+    constructor(row, col) {
+        this.row = this.x = row;
+        this.col = this.y = col;
+    }
+}
+
 class ChessLogic {
     constructor() {
-        // making clear board
-        this.board = new Array();
+        this.clearBoard();
+    }
+	clearBoard() {
+		this.board = new Array();
         for (let i = 0; i < 8; i++) {
             let r = new Array();
             for (let j = 0; j < 8; j++) {
@@ -18,7 +27,7 @@ class ChessLogic {
             }
             this.board.push(r);
         }
-    }
+	}
     initBoard() {
         this.board[0][0] = new Piece('wh', 'r');
         this.board[1][0] = new Piece('wh', 'n');
@@ -53,47 +62,180 @@ class ChessLogic {
         this.board[6][7] = new Piece('bl', 'n');
         this.board[7][7] = new Piece('bl', 'r');
     }
-	getCoords(color, type) {
-		// color: 'wh', 'bl'
+    isCoordValid(row, col) {
+        return row >= 0 && row < 8 && col >= 0 && col < 8;
+    }
+    getCoords(color, type) {
+        // color: 'wh', 'bl'
         // type: 'k', 'q', 'r', 'b', 'n', 'p'
-		let coords = new Array();
+        let coords = new Array();
         for (let i = 0; i < 8; i++) {
             for (let j = 0; j < 8; j++) {
-				let pc = this.board[i][j];
-                if(pc != null && pc.color == color && pc.type == type) {
-					coords.push(i.toString() + j.toString());
-				}
+                let pc = this.board[i][j];
+                if (pc != null && pc.color == color && pc.type == type) {
+                    coords.push(new Coord(i, j));
+                }
             }
         }
-		return coords;
-	}
-	getThreateningCells(coord) {
+        return coords;
+    }
+    /*getThreateningCells(coord) {
 		let threateningCells = new Array();
 		let pc = this.board[coord[0], coord[1]];
-		if(pc == null) return weakMovableCells;
-		else(pc.type == 'k')
+		if(pc == null) return threateningCells;
+		else if(pc.type == 'k') {
+			
+		}
 		
-	}
-	isChecked(color) {
-		// color: 'wh', 'bl'
-		let kingCoord = this.getCoords(color, 'k')[0];
-		let opposite = (color == 'wh')? 'bl' : 'wh';
-		return false;
-	}
-	isCheckMated() {
-		return false;
-	}
-	getMovableCells(coord) {
-		
-	}
+	}*/
+    isChecked(color) {
+        // color: 'wh', 'bl'
+        let king = this.getCoords(color, 'k')[0];
+        let opposite = color == 'wh' ? 'bl' : 'wh';
+        // check king
+        for (let i = king.x - 1; i <= king.x + 1; i++) {
+            for (let j = king.y - 1; j <= king.y + 1; j++) {
+                if (this.isCoordValid(i, j) && this.board[i][j] != null) {
+                    let pc = this.board[i][j];
+                    if (pc.color == opposite && pc.type == 'k') {
+                        return true;
+                    }
+                }
+            }
+        }
+        // check horizontal, vertical
+        for (let i = king.x - 1; i >= 0; i--) {
+			if(this.board[i][king.y] != null) {
+				let pc = this.board[i][king.y];
+				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
+				   return true;
+				}
+				break;
+			}
+		}
+		for (let i = king.x + 1; i < 8; i++) {
+			if(this.board[i][king.y] != null) {
+				let pc = this.board[i][king.y];
+				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
+				   return true;
+				}
+				break;
+			}
+		}
+		for (let j = king.y - 1; j >= 0; j--) {
+			if(this.board[king.x][j] != null) {
+				let pc = this.board[king.x][j];
+				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
+				   return true;
+				}
+				break;
+			}
+		}
+		for (let j = king.y + 1; j < 8; j++) {
+			if(this.board[king.x][j] != null) {
+				let pc = this.board[king.x][j];
+				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
+				   return true;
+				}
+				break;
+			}
+		}
+		// check diagonal
+		for (let i = 1; i < 7; i++) {
+			if(!this.isCoordValid(king.x - i, king.y - i)) {
+				break;
+			}
+			let pc = this.board[king.x - i][king.y - i];
+			if(pc != null) {
+				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
+				   return true;
+				}
+				break;
+			}
+		}
+		for (let i = 1; i < 7; i++) {
+			if(!this.isCoordValid(king.x - i, king.y + i)) {
+				break;
+			}
+			let pc = this.board[king.x - i][king.y + i];
+			if(pc != null) {
+				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
+				   return true;
+				}
+				break;
+			}
+		}
+		for (let i = 1; i < 7; i++) {
+			if(!this.isCoordValid(king.x + i, king.y - i)) {
+				break;
+			}
+			let pc = this.board[king.x + i][king.y - i];
+			if(pc != null) {
+				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
+				   return true;
+				}
+				break;
+			}
+		}
+		for (let i = 1; i < 7; i++) {
+			if(!this.isCoordValid(king.x + i, king.y + i)) {
+				break;
+			}
+			let pc = this.board[king.x + i][king.y + i];
+			if(pc != null) {
+				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
+				   return true;
+				}
+				break;
+			}
+		}
+		// check knight
+		let knightX = new Array(-2, -2, -1, -1, 1, 1, 2, 2);
+		let knightY = new Array(-1, 1, -2, 2, -2, 2, -1, 1);
+		for(let i = 0; i < 8; i++) {
+			let x = king.x + knightX[i], y = king.y + knightY[i];
+			if (this.isCoordValid(x, y) && this.board[x][y] != null) {
+				let pc = this.board[x][y];
+				if (pc.color == opposite && pc.type == 'n') {
+					return true;
+				}
+			}
+		}
+		// check pawn
+		let frontDir, px, py;
+		if(color == 'wh') py = king.y + 1;
+		else py = king.y - 1;
+		px = king.x - 1;
+		if (this.isCoordValid(px, py) && this.board[px][py] != null) {
+			let pc = this.board[px][py];
+			if (pc.color == opposite && pc.type == 'p') {
+				return true;
+			}
+		}
+		px = king.x + 1;
+		if (this.isCoordValid(px, py) && this.board[px][py] != null) {
+			let pc = this.board[px][py];
+			if (pc.color == opposite && pc.type == 'p') {
+				return true;
+			}
+		}
+
+        return false;
+    }
+    isCheckMated() {
+        return false;
+    }
+	getPseudoLegalMoves(coord) {}
+    getLegalMoves(coord) {}
+	move() {}
 }
 
 class Game {
     constructor() {
         this.logic = new ChessLogic();
         this.boardUI = document.getElementsByClassName('board')[0];
-		this.boardBGUI = this.boardUI.getElementsByClassName('board-bg')[0];
-		this.boardPCSUI = this.boardUI.getElementsByClassName('board-pcs')[0];
+        this.boardBGUI = this.boardUI.getElementsByClassName('board-bg')[0];
+        this.boardPCSUI = this.boardUI.getElementsByClassName('board-pcs')[0];
         this.wk = this.createPieceTemplate('wh', 'k');
         this.wq = this.createPieceTemplate('wh', 'q');
         this.wr = this.createPieceTemplate('wh', 'r');
@@ -107,7 +249,7 @@ class Game {
         this.bn = this.createPieceTemplate('bl', 'n');
         this.bp = this.createPieceTemplate('bl', 'p');
         this.selectedPiece = null;
-		this.turn = ''; // 'wh': white, 'bl': black
+        this.turn = ''; // 'wh': white, 'bl': black
     }
     clearBoardUI() {
         let highlightedCells = this.boardUI.getElementsByClassName('cell cell-highlight');
@@ -145,8 +287,8 @@ class Game {
                 }
             }
         }
-		this.selectedPiecet = null;
-		this.turn = 'wh';
+        this.selectedPiecet = null;
+        this.turn = 'wh';
     }
     onBlankClick() {
         if (this.selectedPiece == null) return;
@@ -158,25 +300,25 @@ class Game {
         this.selectedPiece = null;
     }
     onPieceClick(squareNum) {
-		// handling the case of same-piece-clicking
-		if(this.selectedPiece != null && this.selectedPiece.classList[3] == squareNum) {
-			this.onBlankClick();
-			return;
-		}
-		// cancel selection
+        // handling the case of same-piece-clicking
+        if (this.selectedPiece != null && this.selectedPiece.classList[3] == squareNum) {
+            this.onBlankClick();
+            return;
+        }
+        // cancel selection
         this.onBlankClick();
-		let clickedPiece = this.boardUI.getElementsByClassName('piece ' + squareNum)[0];
-		// handling the turn
-		if(!(this.turn == clickedPiece.classList[1])) {
-			return;
-		}
+        let clickedPiece = this.boardUI.getElementsByClassName('piece ' + squareNum)[0];
+        // handling the turn
+        if (!(this.turn == clickedPiece.classList[1])) {
+            return;
+        }
         this.selectedPiece = clickedPiece;
-		// create selected piece highlight
-		let hCell = this.boardUI.getElementsByClassName('cell ' + squareNum)[0];
+        // create selected piece highlight
+        let hCell = this.boardUI.getElementsByClassName('cell ' + squareNum)[0];
         hCell.classList.add('cell-highlight');
         // create paths
-		this.logic.getMovableCells(squareNum[7] + squareNum[8]);
-		// ....wip
+        this.logic.getMovableCells(squareNum[7] + squareNum[8]);
+        // ....wip
     }
     onPathClick() {
         // move selected piece to path
@@ -189,3 +331,14 @@ class Game {
 
 var game = new Game();
 game.start();
+
+bclear = function() {
+	game.logic.clearBoard();
+	game.clearBoardUI();
+}
+
+bplace = function(color, type, row, col) {
+	let pc = new Piece(color, type);
+	game.logic.board[row][col] = pc;
+	game.placePieceUI(pc, row, col);
+}
