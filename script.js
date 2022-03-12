@@ -227,7 +227,7 @@ class ChessLogic {
     }
 	getPseudoLegalMoves(coord) {}
     getLegalMoves(coord) {}
-	move() {}
+	movePiece() {}
 }
 
 class Game {
