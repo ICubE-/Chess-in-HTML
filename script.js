@@ -225,9 +225,19 @@ class ChessLogic {
     isCheckMated() {
         return false;
     }
-	getPseudoLegalMoves(coord) {}
-    getLegalMoves(coord) {}
-	movePiece() {}
+    /**
+     * @param {string} coord Coordinate.
+     * @returns {Array<string>} Pseudo Legal Moves.
+     */
+    getPseudoLegalMoves(coord) {
+        return new Array();
+    }
+    getLegalMoves(coord) {
+        this.getPseudoLegalMoves();
+    }
+    movePiece() {
+        
+    }
 }
 
 class Game {
@@ -287,7 +297,7 @@ class Game {
                 }
             }
         }
-        this.selectedPiecet = null;
+        this.selectedPiece = null;
         this.turn = 'wh';
     }
     onBlankClick() {

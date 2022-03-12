@@ -2,8 +2,8 @@ body {
     background-color: #202020;
     color: #d0d0d0;
 }
-.header {
-}
+/*.header {
+}*/
 .board {
     --board-size: 400px;
 	--cell-size: calc(var(--board-size) / 8);
@@ -79,6 +79,30 @@ body {
 }
 .piece.p::after {
     content: '\265F';
+}
+.move {
+    width: 12.5%;
+    height: 12.5%;
+    overflow: hidden;
+    position: absolute;
+	z-index: 2;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+    box-sizing: border-box;
+    border-radius: 50%;
+    opacity: 20%;
+}
+.move.empty {
+    padding: 4.2%;
+    background-clip: content-box;
+    background-color: black;
+}
+.move.occupied {
+    border-color: black;
+    border-style: solid;
+    border-width: calc(var(--cell-size) * 0.08);
+
 }
 .square-00 { transform: translate(0, 700%); }
 .square-01 { transform: translate(0, 600%); }
