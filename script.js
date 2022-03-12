@@ -12,6 +12,7 @@ class ChessLogic {
         this.clearBoard();
     }
 	clearBoard() {
+        /** @type {Array<string>} */
 		this.board = new Array();
         for (let i = 0; i < 8; i++) {
             let r = new Array();
@@ -72,26 +73,34 @@ class ChessLogic {
         }
         return coords;
     }
-    /*getThreateningCells(coord) {
-		let threateningCells = new Array();
-		let pc = this.board[coord[0], coord[1]];
-		if(pc == null) return threateningCells;
-		else if(pc.type == 'k') {
-			
-		}
-		
-	}*/
+    getOppositeColor(color) {
+        return color == 'wh' ? 'bl' : 'wh';
+    }
+    num2Coord(row, col) {
+        return row.toString() + col.toString();
+    }
+    isCellEmpty(row, col) {
+        return this.isCoordValid(row, col) && this.board[row][col] == null;
+    }
+    isCellEnemy(row, col, color) {
+        return this.isCoordValid(row, col) 
+        && this.board[row][col] != null 
+        && this.board[row][col].color != color;
+    }
+    isCellEmptyOrEnemy(row, col, color) {
+        return this.isCellEmpty(row, col) || this.isCellEnemy(row, col, color);
+    }
     isChecked(color) {
         // color: 'wh', 'bl'
         let king = this.getCoords(color, 'k')[0];
 		let kx = king[0], ky = king[1];
-        let opposite = color == 'wh' ? 'bl' : 'wh';
+        let oppositeColor = this.getOppositeColor(color);
         // check king
         for (let i = kx - 1; i <= kx + 1; i++) {
             for (let j = ky - 1; j <= ky + 1; j++) {
                 if (this.isCoordValid(i, j) && this.board[i][j] != null) {
                     let pc = this.board[i][j];
-                    if (pc.color == opposite && pc.type == 'k') {
+                    if (pc.color == oppositeColor && pc.type == 'k') {
                         return true;
                     }
                 }
@@ -101,7 +110,7 @@ class ChessLogic {
         for (let i = kx - 1; i >= 0; i--) {
 			if(this.board[i][ky] != null) {
 				let pc = this.board[i][ky];
-				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
+				if(pc.color == oppositeColor && (pc.type == 'q' || pc.type == 'r')) {
 				   return true;
 				}
 				break;
@@ -110,7 +119,7 @@ class ChessLogic {
 		for (let i = kx + 1; i < 8; i++) {
 			if(this.board[i][ky] != null) {
 				let pc = this.board[i][ky];
-				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
+				if(pc.color == oppositeColor && (pc.type == 'q' || pc.type == 'r')) {
 				   return true;
 				}
 				break;
@@ -119,7 +128,7 @@ class ChessLogic {
 		for (let j = ky - 1; j >= 0; j--) {
 			if(this.board[kx][j] != null) {
 				let pc = this.board[kx][j];
-				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
+				if(pc.color == oppositeColor && (pc.type == 'q' || pc.type == 'r')) {
 				   return true;
 				}
 				break;
@@ -128,7 +137,7 @@ class ChessLogic {
 		for (let j = ky + 1; j < 8; j++) {
 			if(this.board[kx][j] != null) {
 				let pc = this.board[kx][j];
-				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
+				if(pc.color == oppositeColor && (pc.type == 'q' || pc.type == 'r')) {
 				   return true;
 				}
 				break;
@@ -141,7 +150,7 @@ class ChessLogic {
 			}
 			let pc = this.board[kx - i][ky - i];
 			if(pc != null) {
-				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
+				if(pc.color == oppositeColor && (pc.type == 'q' || pc.type == 'b')) {
 				   return true;
 				}
 				break;
@@ -153,7 +162,7 @@ class ChessLogic {
 			}
 			let pc = this.board[kx - i][ky + i];
 			if(pc != null) {
-				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
+				if(pc.color == oppositeColor && (pc.type == 'q' || pc.type == 'b')) {
 				   return true;
 				}
 				break;
@@ -165,7 +174,7 @@ class ChessLogic {
 			}
 			let pc = this.board[kx + i][ky - i];
 			if(pc != null) {
-				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
+				if(pc.color == oppositeColor && (pc.type == 'q' || pc.type == 'b')) {
 				   return true;
 				}
 				break;
@@ -177,7 +186,7 @@ class ChessLogic {
 			}
 			let pc = this.board[kx + i][ky + i];
 			if(pc != null) {
-				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
+				if(pc.color == oppositeColor && (pc.type == 'q' || pc.type == 'b')) {
 				   return true;
 				}
 				break;
@@ -190,7 +199,7 @@ class ChessLogic {
 			let x = kx + knightX[i], y = ky + knightY[i];
 			if (this.isCoordValid(x, y) && this.board[x][y] != null) {
 				let pc = this.board[x][y];
-				if (pc.color == opposite && pc.type == 'n') {
+				if (pc.color == oppositeColor && pc.type == 'n') {
 					return true;
 				}
 			}
@@ -202,52 +211,161 @@ class ChessLogic {
 		px = kx - 1;
 		if (this.isCoordValid(px, py) && this.board[px][py] != null) {
 			let pc = this.board[px][py];
-			if (pc.color == opposite && pc.type == 'p') {
+			if (pc.color == oppositeColor && pc.type == 'p') {
 				return true;
 			}
 		}
 		px = kx + 1;
 		if (this.isCoordValid(px, py) && this.board[px][py] != null) {
 			let pc = this.board[px][py];
-			if (pc.color == opposite && pc.type == 'p') {
+			if (pc.color == oppositeColor && pc.type == 'p') {
 				return true;
 			}
 		}
 
         return false;
     }
-    isCheckMated() {
+    isCheckmated() {
         return false;
     }
     /**
-     * @param {string} coord Coordinate.
-     * @returns {Array<string>} Pseudo Legal Moves.
+     * Gets coordinates of pseudo legal moves in particular linear direction.
+     * @param {string} color Color of the piece.
+     * @param {number} row Row of the piece.
+     * @param {number} col Column of the piece.
+     * @param {number} rowdir Row direction used to search.
+     * @param {number} coldir Column direction used to search.
+     * @returns {Array<string>} Coordinates of pseudo legal moves in particular direction.
      */
-    getPseudoLegalMoveCoords(coord) {
-		let pseudoLegalMoves = new Array();
-		let x = coord[0], y = coord[1];
-		let piece = this.board[x][y];
-		let opposite = piece.color == 'wh' ? 'bl' : 'wh';
+    getLinearPseudoLegalMoveCoords(color, row, col, rowdir, coldir) {
+        console.log(color, row, col, rowdir, coldir);
+        let linearPseudoLegalMoves = new Array();
+        for(let i = 1; i < 7; i++) {
+            let x = row + rowdir * i;
+            let y = col + coldir * i;
+            console.log(x, y);
+            if(!this.isCoordValid(x, y)) {
+                // if searching cell is out of the board
+                break;
+            }
+            if(this.board[x][y] != null) {
+                // if searching cell is a piece
+                if(this.board[x][y].color != color) {
+                    // if color of the piece is opposite
+                    linearPseudoLegalMoves.push(this.num2Coord(x, y));
+                }
+                break;
+            } else {
+                // if searching cell is empty
+                linearPseudoLegalMoves.push(this.num2Coord(x, y));
+            }
+        }
+        console.log(linearPseudoLegalMoves);
+        return linearPseudoLegalMoves;
+    }
+    /**
+     * Gets coordinates of pseudo legal moves.
+     * Pseudo legal move: The move that the piece can do, without considering the check.
+     * @param {number} row Row of the piece.
+     * @param {number} col Column of the piece.
+     * @returns {Array<string>} Coordinates of pseudo legal moves of the piece.
+     */
+    getPseudoLegalMoveCoords(row, col) {
+		let pseudoLegalMoveCoords = new Array();
+		let piece = this.board[row][col];
 		if(piece.type == 'k') {
-			for (let i = x - 1; i <= x + 1; i++) {
-				for (let j = y - 1; j <= y + 1; j++) {
-					if (this.isCoordValid(i, j) && (
-                        this.board[i][j] == null || this.board[i][j].color == opposite
-                        )) {
-						pseudoLegalMoves.push(i.toString() + j.toString());
+			for (let i = row - 1; i <= row + 1; i++) {
+				for (let j = col - 1; j <= col + 1; j++) {
+					if (this.isCellEmptyOrEnemy(i, j, piece.color)) {
+						pseudoLegalMoveCoords.push(this.num2Coord(i, j));
 					}
 				}
 			}
+            // castling
 		} else if(piece.type == 'q') {
-			
-		}
-        return new Array();
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1, -1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  0));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0, -1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0,  1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1, -1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  0));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  1));
+		} else if(piece.type == 'r') {
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  0));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0, -1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0,  1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  0));
+		} else if(piece.type == 'b') {
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1, -1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1, -1));
+            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  1));
+		} else if(piece.type == 'n') {
+            let dirX = new Array(-2, -2, -1, -1, 1, 1, 2, 2);
+            let dirY = new Array(-1, 1, -2, 2, -2, 2, -1, 1);
+            for(let i = 0; i < 8; i++) {
+                let x = row + dirX[i], y = col + dirY[i];
+                if (this.isCellEmptyOrEnemy(x, y, piece.color)) {
+                    pseudoLegalMoveCoords.push(this.num2Coord(x, y));
+                }
+            }
+		} else if(piece.type == 'p') {
+            let frontDir = (piece.color == 'wh') ? 1 : -1;
+            if(this.isCellEmpty(row, col + frontDir)) {
+                pseudoLegalMoveCoords.push(this.num2Coord(row, col + frontDir));
+            }
+            // 1 -> 1, -1 -> 6
+            if(col == Math.floor((7 - frontDir * 5) / 2) && this.isCellEmpty(row, col + frontDir)) {
+                if(this.isCellEmpty(row, col + frontDir * 2)) {
+                    pseudoLegalMoveCoords.push(this.num2Coord(row, col + frontDir * 2));
+                }
+            }
+            if(this.isCellEnemy(row - 1, col + frontDir, piece.color)) {
+                pseudoLegalMoveCoords.push(this.num2Coord(row - 1, col + frontDir));
+            }
+            if(this.isCellEnemy(row + 1, col + frontDir, piece.color)) {
+                pseudoLegalMoveCoords.push(this.num2Coord(row + 1, col + frontDir));
+            }
+            // en passant, promotion?
+        }
+        console.log(pseudoLegalMoveCoords);
+        return pseudoLegalMoveCoords;
     }
+    /**
+     * Gets coordinates of legal moves.
+     * Legal move: The move that the piece can do, considering the check.
+     * @param {string} coord Coordinate of a piece.
+     * @returns {Array<string>} Coordinates of pseudo legal moves of the piece.
+     */
     getLegalMoveCoords(coord) {
-        this.getPseudoLegalMoves(coord);
+        let legalMoveCoords = new Array();
+        let ox = parseInt(coord[0]), oy = parseInt(coord[1]);
+        let pseudoLegalMoveCoords = this.getPseudoLegalMoveCoords(ox, oy);
+        for(let plmc of pseudoLegalMoveCoords.values()) {
+            let nx = parseInt(plmc[0]), ny = parseInt(plmc[1]);
+            let color = this.board[ox][oy].color;
+            let tmpPiece = this.board[nx][ny];
+            this.board[nx][ny] = this.board[ox][oy];
+            this.board[ox][oy] = null;
+            if(!this.isChecked(color)) {
+                legalMoveCoords.push(plmc);
+            }
+            this.board[ox][oy] = this.board[nx][ny];
+            this.board[nx][ny] = tmpPiece;
+        }
+        console.log(legalMoveCoords);
+        return legalMoveCoords;
     }
-    movePiece() {
-        
+    /**
+     * @param {string} oldCoord The origin coordinate of a piece.
+     * @param {string} newCoord The destination coordinate of the piece.
+     */
+    movePiece(oldCoord, newCoord) {
+        let ox = parseInt(oldCoord[0]), oy = parseInt(oldCoord[1]);
+        let nx = parseInt(newCoord[0]), ny = parseInt(newCoord[1]);
+        this.board[nx][ny] = this.board[ox][oy];
+        this.board[ox][oy] = null;
     }
 }
 
@@ -282,10 +400,7 @@ class Game {
         while (pieceUIs.length > 0) {
             pieceUIs[0].remove();
         }
-		let moveUIs = this.boardUI.getElementsByClassName('move');
-        while (moveUIs.length > 0) {
-            moveUIs[0].remove();
-        }
+		this.clearPathUI();
     }
     createPieceTemplate(color, type) {
         // color: 'wh', 'bl'
@@ -303,6 +418,24 @@ class Game {
         this.boardPCSUI.appendChild(pieceUI);
         return pieceUI;
     }
+    placePathUI(row, col) {
+        let pathUI = document.createElement('div');
+        pathUI.classList.add('move');
+        if(this.boardUI.getElementsByClassName('piece square-' + row + col).length > 0) {
+            pathUI.classList.add('occupied');
+        } else pathUI.classList.add('empty');
+        pathUI.classList.add('square-' + row + col);
+        pathUI.addEventListener('click', function () {
+            game.onPathClick(game.selectedPiece.classList[3], row, col);
+        });
+        this.boardMVSUI.appendChild(pathUI);
+    }
+    clearPathUI() {
+        let moveUIs = this.boardUI.getElementsByClassName('move');
+        while (moveUIs.length > 0) {
+            moveUIs[0].remove();
+        }
+    }
     start() {
         this.clearBoardUI();
         this.logic.initBoard();
@@ -316,13 +449,16 @@ class Game {
         this.selectedPiece = null;
         this.turn = 'wh';
     }
+    switchTurn() {
+        this.turn = (this.turn == 'wh') ? 'bl' : 'wh';
+    }
     onBlankClick() {
         if (this.selectedPiece == null) return;
         // remove selected piece highlight
         let squareNum = this.selectedPiece.classList[3];
-        let hCell = this.boardUI.getElementsByClassName('cell ' + squareNum)[0];
-        hCell.classList.remove('cell-highlight');
-        // remove paths (WIP)
+        this.boardUI.getElementsByClassName('cell ' + squareNum)[0].classList.remove('cell-highlight');
+        // remove paths
+        this.clearPathUI();
         this.selectedPiece = null;
     }
     onPieceClick(squareNum) {
@@ -340,18 +476,26 @@ class Game {
         }
         this.selectedPiece = clickedPiece;
         // create selected piece highlight
-        let hCell = this.boardUI.getElementsByClassName('cell ' + squareNum)[0];
-        hCell.classList.add('cell-highlight');
+        this.boardUI.getElementsByClassName('cell ' + squareNum)[0].classList.add('cell-highlight');
         // create paths
-        this.logic.getLegalMoveCoords(squareNum[7] + squareNum[8]);
-        // ....wip
+        let paths = this.logic.getLegalMoveCoords(squareNum.substring(7));
+        for(let path of paths.values()) {
+            this.placePathUI(parseInt(path[0]), parseInt(path[1]));
+        }
     }
-    onPathClick() {
+    onPathClick(oldSquareNum, newRow, newCol) {
         // move selected piece to path
+        let newCoord = this.logic.num2Coord(newRow, newCol);
+        console.log(oldSquareNum.substring(7), newCoord);
+        this.logic.movePiece(oldSquareNum.substring(7), newCoord);
+        this.selectedPiece.classList.remove(oldSquareNum);
+        this.selectedPiece.classList.add('square-' + newCoord);
         // remove selected piece highlight
         // remove paths
+        this.clearPathUI();
         // create previous move highlight
         this.selectedPiece = null;
+        this.switchTurn();
     }
 }
 
