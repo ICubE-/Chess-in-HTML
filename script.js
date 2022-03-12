@@ -7,13 +7,6 @@ class Piece {
     }
 }
 
-class Coord {
-    constructor(row, col) {
-        this.row = this.x = row;
-        this.col = this.y = col;
-    }
-}
-
 class ChessLogic {
     constructor() {
         this.clearBoard();
@@ -73,7 +66,7 @@ class ChessLogic {
             for (let j = 0; j < 8; j++) {
                 let pc = this.board[i][j];
                 if (pc != null && pc.color == color && pc.type == type) {
-                    coords.push(new Coord(i, j));
+                    coords.push(i.toString() + j.toString());
                 }
             }
         }
@@ -91,10 +84,11 @@ class ChessLogic {
     isChecked(color) {
         // color: 'wh', 'bl'
         let king = this.getCoords(color, 'k')[0];
+		let kx = king[0], ky = king[1];
         let opposite = color == 'wh' ? 'bl' : 'wh';
         // check king
-        for (let i = king.x - 1; i <= king.x + 1; i++) {
-            for (let j = king.y - 1; j <= king.y + 1; j++) {
+        for (let i = kx - 1; i <= kx + 1; i++) {
+            for (let j = ky - 1; j <= ky + 1; j++) {
                 if (this.isCoordValid(i, j) && this.board[i][j] != null) {
                     let pc = this.board[i][j];
                     if (pc.color == opposite && pc.type == 'k') {
@@ -104,36 +98,36 @@ class ChessLogic {
             }
         }
         // check horizontal, vertical
-        for (let i = king.x - 1; i >= 0; i--) {
-			if(this.board[i][king.y] != null) {
-				let pc = this.board[i][king.y];
+        for (let i = kx - 1; i >= 0; i--) {
+			if(this.board[i][ky] != null) {
+				let pc = this.board[i][ky];
 				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
 				   return true;
 				}
 				break;
 			}
 		}
-		for (let i = king.x + 1; i < 8; i++) {
-			if(this.board[i][king.y] != null) {
-				let pc = this.board[i][king.y];
+		for (let i = kx + 1; i < 8; i++) {
+			if(this.board[i][ky] != null) {
+				let pc = this.board[i][ky];
 				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
 				   return true;
 				}
 				break;
 			}
 		}
-		for (let j = king.y - 1; j >= 0; j--) {
-			if(this.board[king.x][j] != null) {
-				let pc = this.board[king.x][j];
+		for (let j = ky - 1; j >= 0; j--) {
+			if(this.board[kx][j] != null) {
+				let pc = this.board[kx][j];
 				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
 				   return true;
 				}
 				break;
 			}
 		}
-		for (let j = king.y + 1; j < 8; j++) {
-			if(this.board[king.x][j] != null) {
-				let pc = this.board[king.x][j];
+		for (let j = ky + 1; j < 8; j++) {
+			if(this.board[kx][j] != null) {
+				let pc = this.board[kx][j];
 				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'r')) {
 				   return true;
 				}
@@ -142,10 +136,10 @@ class ChessLogic {
 		}
 		// check diagonal
 		for (let i = 1; i < 7; i++) {
-			if(!this.isCoordValid(king.x - i, king.y - i)) {
+			if(!this.isCoordValid(kx - i, ky - i)) {
 				break;
 			}
-			let pc = this.board[king.x - i][king.y - i];
+			let pc = this.board[kx - i][ky - i];
 			if(pc != null) {
 				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
 				   return true;
@@ -154,10 +148,10 @@ class ChessLogic {
 			}
 		}
 		for (let i = 1; i < 7; i++) {
-			if(!this.isCoordValid(king.x - i, king.y + i)) {
+			if(!this.isCoordValid(kx - i, ky + i)) {
 				break;
 			}
-			let pc = this.board[king.x - i][king.y + i];
+			let pc = this.board[kx - i][ky + i];
 			if(pc != null) {
 				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
 				   return true;
@@ -166,10 +160,10 @@ class ChessLogic {
 			}
 		}
 		for (let i = 1; i < 7; i++) {
-			if(!this.isCoordValid(king.x + i, king.y - i)) {
+			if(!this.isCoordValid(kx + i, ky - i)) {
 				break;
 			}
-			let pc = this.board[king.x + i][king.y - i];
+			let pc = this.board[kx + i][ky - i];
 			if(pc != null) {
 				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
 				   return true;
@@ -178,10 +172,10 @@ class ChessLogic {
 			}
 		}
 		for (let i = 1; i < 7; i++) {
-			if(!this.isCoordValid(king.x + i, king.y + i)) {
+			if(!this.isCoordValid(kx + i, ky + i)) {
 				break;
 			}
-			let pc = this.board[king.x + i][king.y + i];
+			let pc = this.board[kx + i][ky + i];
 			if(pc != null) {
 				if(pc.color == opposite && (pc.type == 'q' || pc.type == 'b')) {
 				   return true;
@@ -193,7 +187,7 @@ class ChessLogic {
 		let knightX = new Array(-2, -2, -1, -1, 1, 1, 2, 2);
 		let knightY = new Array(-1, 1, -2, 2, -2, 2, -1, 1);
 		for(let i = 0; i < 8; i++) {
-			let x = king.x + knightX[i], y = king.y + knightY[i];
+			let x = kx + knightX[i], y = ky + knightY[i];
 			if (this.isCoordValid(x, y) && this.board[x][y] != null) {
 				let pc = this.board[x][y];
 				if (pc.color == opposite && pc.type == 'n') {
@@ -203,16 +197,16 @@ class ChessLogic {
 		}
 		// check pawn
 		let frontDir, px, py;
-		if(color == 'wh') py = king.y + 1;
-		else py = king.y - 1;
-		px = king.x - 1;
+		if(color == 'wh') py = ky + 1;
+		else py = ky - 1;
+		px = kx - 1;
 		if (this.isCoordValid(px, py) && this.board[px][py] != null) {
 			let pc = this.board[px][py];
 			if (pc.color == opposite && pc.type == 'p') {
 				return true;
 			}
 		}
-		px = king.x + 1;
+		px = kx + 1;
 		if (this.isCoordValid(px, py) && this.board[px][py] != null) {
 			let pc = this.board[px][py];
 			if (pc.color == opposite && pc.type == 'p') {
@@ -229,11 +223,28 @@ class ChessLogic {
      * @param {string} coord Coordinate.
      * @returns {Array<string>} Pseudo Legal Moves.
      */
-    getPseudoLegalMoves(coord) {
+    getPseudoLegalMoveCoords(coord) {
+		let pseudoLegalMoves = new Array();
+		let x = coord[0], y = coord[1];
+		let piece = this.board[x][y];
+		let opposite = piece.color == 'wh' ? 'bl' : 'wh';
+		if(piece.type == 'k') {
+			for (let i = x - 1; i <= x + 1; i++) {
+				for (let j = y - 1; j <= y + 1; j++) {
+					if (this.isCoordValid(i, j) && (
+                        this.board[i][j] == null || this.board[i][j].color == opposite
+                        )) {
+						pseudoLegalMoves.push(i.toString() + j.toString());
+					}
+				}
+			}
+		} else if(piece.type == 'q') {
+			
+		}
         return new Array();
     }
-    getLegalMoves(coord) {
-        this.getPseudoLegalMoves();
+    getLegalMoveCoords(coord) {
+        this.getPseudoLegalMoves(coord);
     }
     movePiece() {
         
@@ -246,6 +257,7 @@ class Game {
         this.boardUI = document.getElementsByClassName('board')[0];
         this.boardBGUI = this.boardUI.getElementsByClassName('board-bg')[0];
         this.boardPCSUI = this.boardUI.getElementsByClassName('board-pcs')[0];
+		this.boardMVSUI = this.boardUI.getElementsByClassName('board-mvs')[0];
         this.wk = this.createPieceTemplate('wh', 'k');
         this.wq = this.createPieceTemplate('wh', 'q');
         this.wr = this.createPieceTemplate('wh', 'r');
@@ -269,6 +281,10 @@ class Game {
         let pieceUIs = this.boardUI.getElementsByClassName('piece');
         while (pieceUIs.length > 0) {
             pieceUIs[0].remove();
+        }
+		let moveUIs = this.boardUI.getElementsByClassName('move');
+        while (moveUIs.length > 0) {
+            moveUIs[0].remove();
         }
     }
     createPieceTemplate(color, type) {
@@ -327,7 +343,7 @@ class Game {
         let hCell = this.boardUI.getElementsByClassName('cell ' + squareNum)[0];
         hCell.classList.add('cell-highlight');
         // create paths
-        this.logic.getMovableCells(squareNum[7] + squareNum[8]);
+        this.logic.getLegalMoveCoords(squareNum[7] + squareNum[8]);
         // ....wip
     }
     onPathClick() {
