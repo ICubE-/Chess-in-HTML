@@ -93,7 +93,7 @@ class ChessLogic {
     isChecked(color) {
         // color: 'wh', 'bl'
         let king = this.getCoords(color, 'k')[0];
-		let kx = king[0], ky = king[1];
+		let kx = parseInt(king[0]), ky = parseInt(king[1]);
         let oppositeColor = this.getOppositeColor(color);
         // check king
         for (let i = kx - 1; i <= kx + 1; i++) {
@@ -238,12 +238,10 @@ class ChessLogic {
      * @returns {Array<string>} Coordinates of pseudo legal moves in particular direction.
      */
     getLinearPseudoLegalMoveCoords(color, row, col, rowdir, coldir) {
-        console.log(color, row, col, rowdir, coldir);
         let linearPseudoLegalMoves = new Array();
         for(let i = 1; i < 7; i++) {
             let x = row + rowdir * i;
             let y = col + coldir * i;
-            console.log(x, y);
             if(!this.isCoordValid(x, y)) {
                 // if searching cell is out of the board
                 break;
@@ -260,7 +258,6 @@ class ChessLogic {
                 linearPseudoLegalMoves.push(this.num2Coord(x, y));
             }
         }
-        console.log(linearPseudoLegalMoves);
         return linearPseudoLegalMoves;
     }
     /**
@@ -283,24 +280,30 @@ class ChessLogic {
 			}
             // castling
 		} else if(piece.type == 'q') {
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1, -1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  0));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0, -1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0,  1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1, -1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  0));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  1));
+            let tmp = new Array();
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1, -1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  0));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0, -1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0,  1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1, -1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  0));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  1));
+            pseudoLegalMoveCoords = tmp.flat();
 		} else if(piece.type == 'r') {
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  0));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0, -1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0,  1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  0));
+            let tmp = new Array();
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  0));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0, -1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  0,  1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  0));
+            pseudoLegalMoveCoords = tmp.flat();
 		} else if(piece.type == 'b') {
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1, -1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1, -1));
-            pseudoLegalMoveCoords.concat(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  1));
+            let tmp = new Array();
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1, -1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1,  1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1, -1));
+            tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col,  1,  1));
+            pseudoLegalMoveCoords = tmp.flat();
 		} else if(piece.type == 'n') {
             let dirX = new Array(-2, -2, -1, -1, 1, 1, 2, 2);
             let dirY = new Array(-1, 1, -2, 2, -2, 2, -1, 1);
@@ -329,7 +332,6 @@ class ChessLogic {
             }
             // en passant, promotion?
         }
-        console.log(pseudoLegalMoveCoords);
         return pseudoLegalMoveCoords;
     }
     /**
@@ -354,7 +356,6 @@ class ChessLogic {
             this.board[ox][oy] = this.board[nx][ny];
             this.board[nx][ny] = tmpPiece;
         }
-        console.log(legalMoveCoords);
         return legalMoveCoords;
     }
     /**
@@ -392,10 +393,7 @@ class Game {
         this.turn = ''; // 'wh': white, 'bl': black
     }
     clearBoardUI() {
-        let highlightedCells = this.boardUI.getElementsByClassName('cell cell-highlight');
-        while (highlightedCells.length > 0) {
-            highlightedCells[0].classList.remove('cell-highlight');
-        }
+        this.clearCellHighlightUI();
         let pieceUIs = this.boardUI.getElementsByClassName('piece');
         while (pieceUIs.length > 0) {
             pieceUIs[0].remove();
@@ -417,6 +415,12 @@ class Game {
         });
         this.boardPCSUI.appendChild(pieceUI);
         return pieceUI;
+    }
+    clearCellHighlightUI() {
+        let highlightedCells = this.boardUI.getElementsByClassName('cell cell-highlight');
+        while (highlightedCells.length > 0) {
+            highlightedCells[0].classList.remove('cell-highlight');
+        }
     }
     placePathUI(row, col) {
         let pathUI = document.createElement('div');
@@ -486,14 +490,19 @@ class Game {
     onPathClick(oldSquareNum, newRow, newCol) {
         // move selected piece to path
         let newCoord = this.logic.num2Coord(newRow, newCol);
-        console.log(oldSquareNum.substring(7), newCoord);
+        let newSquareNum = 'square-' + newCoord;
         this.logic.movePiece(oldSquareNum.substring(7), newCoord);
+        let capturedPieceUIArr = this.boardUI.getElementsByClassName('piece ' + newSquareNum);
+        if(capturedPieceUIArr.length > 0) capturedPieceUIArr[0].remove();
         this.selectedPiece.classList.remove(oldSquareNum);
-        this.selectedPiece.classList.add('square-' + newCoord);
-        // remove selected piece highlight
+        this.selectedPiece.classList.add(newSquareNum);
+        // remove highlight
+        this.clearCellHighlightUI();
         // remove paths
         this.clearPathUI();
         // create previous move highlight
+        this.boardUI.getElementsByClassName('cell ' + oldSquareNum)[0].classList.add('cell-highlight');
+        this.boardUI.getElementsByClassName('cell ' + newSquareNum)[0].classList.add('cell-highlight');
         this.selectedPiece = null;
         this.switchTurn();
     }
@@ -511,4 +520,20 @@ bplace = function(color, type, row, col) {
 	let pc = new Piece(color, type);
 	game.logic.board[row][col] = pc;
 	game.placePieceUI(pc, row, col);
+}
+
+bmove = function(ox, oy, nx, ny) {
+    // move selected piece to path
+    let oldCoord = game.logic.num2Coord(ox, oy);
+    let newCoord = game.logic.num2Coord(nx, ny);
+    game.logic.movePiece(oldCoord, newCoord);
+    game.selectedPiece = game.boardUI.getElementsByClassName('piece square-' + oldCoord)[0];
+    game.selectedPiece.classList.remove('square-' + oldCoord);
+    game.selectedPiece.classList.add('square-' + newCoord);
+    // remove selected piece highlight
+    // remove paths
+    game.clearPathUI();
+    // create previous move highlight
+    game.selectedPiece = null;
+    game.switchTurn();
 }
