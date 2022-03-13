@@ -380,7 +380,8 @@ class ChessLogic {
         for(let plmc of pseudoLegalMoveCoords.values()) {
             let nx = plmc[0], ny = plmc[1];
             let color = this.board[ox][oy].color;
-            let movingPiece = this.board[ox][oy].clone();
+            // BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
+            /*let movingPiece = this.board[ox][oy].clone();
             let capturedPiece = this.removePiece(nx, ny);
             let piece = this.board[ox][oy];
             piece.row = nx;
@@ -395,7 +396,7 @@ class ChessLogic {
             this.board[ox][oy] = movingPiece;
             this.board[nx][ny] = capturedPiece;
             this.pieces.push(movingPiece);
-            if(capturedPiece != null) this.pieces.push(capturedPiece);
+            if(capturedPiece != null) this.pieces.push(capturedPiece);*/
         }
         return legalMoveCoords;
     }
