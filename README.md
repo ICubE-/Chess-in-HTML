@@ -15,12 +15,13 @@ HTML, CSS, Javascript로 만든 체스 페이지.
 
 ## Todo list
 
-1. Detecting checkmate, stalemate and ending game (and re-code some spaghettis)
-2. Coordinates
-3. Redesign, insert credit
-4. Providing settings (board size, light/dark mode, flip board, turn notice, show legal moves, show check)
-5. Alerting check (on-off)
-6. Starting new game
-7. Saving progress
-8. Undo, Redo
-9. Showing chess notations
+1. Detect checkmate, stalemate and show victory
+2. Re-code some spaghettis and add comments
+3. Coordinates
+4. Redesign, insert credit
+5. Provide settings (board size, light/dark mode, flip board, turn notice, show legal moves, show check)
+6. Alert check (on-off)
+7. Start new game
+8. Save progress
+9. Undo, Redo
+10. Show chess notations
