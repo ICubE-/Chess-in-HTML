@@ -26,16 +26,18 @@ body {
     z-index: 0;
 	cursor: default;
 }
-.cell-light {
+.cell.cell-light {
     background-color: #ebecd0;
-    color: #779556;
 }
-.cell-dark {
+.cell.cell-dark {
     background-color: #779556;
-    color: #ebecd0;
 }
-.cell-highlight::after {
+.cell.cell-highlight::after {
 	content: linear-gradient(0, #ffff00, #ffff00);
+	opacity: 50%;
+}
+.cell.cell-highlight.special::after {
+	content: linear-gradient(0, #0000ff, #0000ff);
 	opacity: 50%;
 }
 .piece {

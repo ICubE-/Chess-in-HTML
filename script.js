@@ -1,15 +1,16 @@
 class Piece {
-    constructor(color, type, row, col, whenMove = 0) {
-        // color: 'wh', 'bl'
-        // type: 'k', 'q', 'r', 'b', 'n', 'p'
+    /**
+     * Creates a new piece.
+     * @class
+     * @param  {string} color  Color of the piece. 'wh' or 'bl'.
+     * @param  {string} type  Type of the piece. 'k', 'q', 'r', 'b', 'n', or 'p'.
+     * @param  {number} lastMove  
+     * The number of total moves on the board when the piece was moved. 0 means it hasn't moved.
+     */
+    constructor(color, type, lastMove = 0) {
         this.color = color;
         this.type = type;
-        this.row = row;
-        this.col = col;
-        this.whenMove = whenMove;
-    }
-    clone() {
-        return new Piece(this.color, this.type, this.row, this.col, this.whenMove);
+        this.lastMove = lastMove;
     }
 }
 
@@ -17,8 +18,6 @@ class ChessLogic {
     constructor() {
         /** @type {Array<Array<Piece>>} */
 		this.board = new Array();
-        /** @type {Array<Piece>} */
-        this.pieces = new Array();
         this.movesNumber = 0;
         this.clearBoard();
     }
@@ -32,13 +31,12 @@ class ChessLogic {
 	}
     createPiece(color, type, row, col) {
         this.removePiece(row, col);
-        let piece = new Piece(color, type, row, col, this.movesNumber);
+        let piece = new Piece(color, type, this.movesNumber);
         this.board[row][col] = piece;
-        this.pieces.push(piece);
     }
     removePiece(row, col) {
         if(this.board[row][col] != null) {
-            let piece = this.pieces.pop(this.board[row][col]);
+            let piece = this.board[row][col];
             this.board[row][col] = null;
             return piece;
         } else return null;
@@ -48,49 +46,38 @@ class ChessLogic {
      * @param  {number} oldCol  The origin column of the piece.
      * @param  {number} newRow  The destination row of the piece.
      * @param  {number} newCol  The destination column of the piece.
+     * @returns  {Piece}  Captured piece by the move. Could be null.
      */
     movePiece(oldRow, oldCol, newRow, newCol) {
-        this.removePiece(newRow, newCol);
+        let capturedPiece = this.removePiece(newRow, newCol);
         let piece = this.board[oldRow][oldCol];
-        piece.row = newRow;
-        piece.col = newCol;
         this.movesNumber++;
-        piece.whenMove = this.movesNumber;
+        piece.lastMove = this.movesNumber;
         this.board[newRow][newCol] = piece;
         this.board[oldRow][oldCol] = null;
+        return capturedPiece;
     }
+
+    /**
+     * Returns whether the coordinate is on the board or not.
+     * @param  {number} row  Row of the coordinate.
+     * @param  {number} col  Column of the coordinate.
+     * @returns  {boolean}  Whether the coordinate is on the board.
+     */
     isCoordValid(row, col) {
         return row >= 0 && row < 8 && col >= 0 && col < 8;
     }
-    getCoords(color, type) {
-        // color: 'wh', 'bl'
-        // type: 'k', 'q', 'r', 'b', 'n', 'p'
-        let coords = new Array();
-        for (let i = 0; i < 8; i++) {
-            for (let j = 0; j < 8; j++) {
-                let pc = this.board[i][j];
-                if (pc != null && pc.color == color && pc.type == type) {
-                    coords.push(this.num2Coord(i, j));
-                }
-            }
-        }
-        return coords;
-    }
-    getPieces(color, type) {
-        let pcs = new Array();
-        for(let pc of this.pieces) {
-            if(pc.color == color && pc.type == type) {
-                pcs.push(pc);
-            }
-        }
-        return pcs;
-    }
-    getOppositeColor(color) {
-        return color == 'wh' ? 'bl' : 'wh';
-    }
+
+    /**
+     * Returns the coordinate from row number and column number.
+     * @param  {number} row  Row of the coordinate.
+     * @param  {number} col  Column of the coordinate.
+     * @returns  {Array<number>}  The coordinate.
+     */
     num2Coord(row, col) {
         return new Array(row, col);
     }
+    
     isCellEmpty(row, col) {
         return this.isCoordValid(row, col) && this.board[row][col] == null;
     }
@@ -102,16 +89,27 @@ class ChessLogic {
     isCellEmptyOrEnemy(row, col, color) {
         return this.isCellEmpty(row, col) || this.isCellEnemy(row, col, color);
     }
+    getCoords(color, type) {
+        let coords = new Array();
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                let pc = this.board[i][j];
+                if (pc != null && pc.color == color && pc.type == type) {
+                    coords.push(this.num2Coord(i, j));
+                }
+            }
+        }
+        return coords;
+    }
     /**
      * Returns whether the king of a given color is in check or not.
      * @param  {string} color  Color of the king.
      * @returns  {boolean}  Whether the king is in check.
      */
     isInCheck(color) {
-        // color: 'wh', 'bl'
-        let king = this.getPieces(color, 'k')[0];
-		let kx = king.row, ky = king.col;
-        let oppositeColor = this.getOppositeColor(color);
+        let king = this.getCoords(color, 'k')[0];
+		let kx = king[0], ky = king[1];
+        let oppositeColor = color == 'wh' ? 'bl' : 'wh';
         // check king
         for (let i = kx - 1; i <= kx + 1; i++) {
             for (let j = ky - 1; j <= ky + 1; j++) {
@@ -271,7 +269,7 @@ class ChessLogic {
      */
     getLinearPseudoLegalMoveCoords(color, row, col, rowdir, coldir) {
         let linearPseudoLegalMoves = new Array();
-        for(let i = 1; i < 7; i++) {
+        for(let i = 1; i < 8; i++) {
             let x = row + rowdir * i;
             let y = col + coldir * i;
             if(!this.isCoordValid(x, y)) {
@@ -294,7 +292,7 @@ class ChessLogic {
     }
     /**
      * Gets coordinates of pseudo legal moves.
-     * Pseudo legal move: The move that the piece can do, without considering the check.
+     * Pseudo legal move is a move that the piece can do, without considering the check.
      * @param  {number} row  Row of the piece.
      * @param  {number} col  Column of the piece.
      * @returns  {Array<Array<number>>}  Coordinates of pseudo legal moves of the piece.
@@ -311,6 +309,25 @@ class ChessLogic {
 				}
 			}
             // castling
+            const CASTLING_CODE = 10;
+            if(piece.lastMove == 0 && row == 4 
+                && (col == 0 && piece.color == 'wh' || col == 7 && piece.color == 'bl')
+            ) {
+                if(this.board[0][col] != null 
+                    && this.board[0][col].type == 'r' && this.board[0][col].lastMove == 0
+                ) {
+                    let coord = this.num2Coord(2, col);
+                    coord.push(CASTLING_CODE);
+                    pseudoLegalMoveCoords.push(coord);
+                }
+                if(this.board[7][col] != null 
+                    && this.board[7][col].type == 'r' && this.board[7][col].lastMove == 0
+                ) {
+                    let coord = this.num2Coord(6, col);
+                    coord.push(CASTLING_CODE);
+                    pseudoLegalMoveCoords.push(coord);
+                }
+            }
 		} else if(piece.type == 'q') {
             let tmp = new Array();
             tmp.push(this.getLinearPseudoLegalMoveCoords(piece.color, row, col, -1, -1));
@@ -368,7 +385,7 @@ class ChessLogic {
     }
     /**
      * Gets coordinates of legal moves.
-     * Legal move: The move that the piece can do, considering the check.
+     * Legal move is a move that the piece can do, considering the check.
      * @param  {number} row  Row of the piece.
      * @param  {number} col  Column of the piece.
      * @returns  {Array<Array<number>>}  Coordinates of pseudo legal moves of the piece.
@@ -380,14 +397,9 @@ class ChessLogic {
         for(let plmc of pseudoLegalMoveCoords.values()) {
             let nx = plmc[0], ny = plmc[1];
             let color = this.board[ox][oy].color;
-            // BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG
-            /*let movingPiece = this.board[ox][oy].clone();
+            let movingPiece = this.board[ox][oy];
             let capturedPiece = this.removePiece(nx, ny);
-            let piece = this.board[ox][oy];
-            piece.row = nx;
-            piece.col = ny;
-            piece.whenMove = this.movesNumber + 1;
-            this.board[nx][ny] = piece;
+            this.board[nx][ny] = movingPiece;
             this.board[ox][oy] = null;
             if(!this.isInCheck(color)) {
                 legalMoveCoords.push(plmc);
@@ -395,8 +407,6 @@ class ChessLogic {
             this.removePiece(nx, ny);
             this.board[ox][oy] = movingPiece;
             this.board[nx][ny] = capturedPiece;
-            this.pieces.push(movingPiece);
-            if(capturedPiece != null) this.pieces.push(capturedPiece);*/
         }
         return legalMoveCoords;
     }
@@ -459,13 +469,14 @@ class ChessUI {
             moveUIs[0].remove();
         }
     }
-    createPathUI(row, col) {
+    createPathUI(row, col, isSpecial = false) {
         let pathUI = document.createElement('div');
         pathUI.classList.add('move');
         if(this.boardUI.getElementsByClassName('piece square-' + row + col).length > 0) {
             pathUI.classList.add('occupied');
         } else pathUI.classList.add('empty');
         pathUI.classList.add('square-' + row + col);
+        if(isSpecial) pathUI.classList.add('special');
         pathUI.addEventListener('click', function () {
             game.onPathClick(pathUI.classList[2]);
         });
@@ -570,7 +581,11 @@ class Game {
         // create paths
         let paths = this.logic.getLegalMoveCoords(coord[0], coord[1]);
         for(let path of paths.values()) {
-            this.ui.createPathUI(path[0], path[1]);
+            if(path.length == 2) {
+                this.ui.createPathUI(path[0], path[1]);
+            } else {
+                this.ui.createPathUI(path[0], path[1], true);
+            }
         }
     }
     onPathClick(pathSquareNum) {
