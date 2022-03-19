@@ -5,12 +5,13 @@ class Piece {
      * @param  {string} color  Color of the piece. 'wh' or 'bl'.
      * @param  {string} type  Type of the piece. 'k', 'q', 'r', 'b', 'n', or 'p'.
      * @param  {number} lastMove  
-     * The number of total moves on the board when the piece was moved. 0 means it hasn't moved.
+     * The number of total moves on the board when the moving of piece was done. 0 means it hasn't moved.
      */
     constructor(color, type, lastMove = 0) {
         this.color = color;
         this.type = type;
         this.lastMove = lastMove;
+        this.pawnMoveTwoCells = false;
     }
 }
 
@@ -58,10 +59,15 @@ class ChessLogic {
     movePiece(oldRow, oldCol, newRow, newCol) {
         let capturedPiece = this.removePiece(newRow, newCol);
         let piece = this.board[oldRow][oldCol];
-        this.movesNumber++;
-        piece.lastMove = this.movesNumber;
         this.board[newRow][newCol] = piece;
         this.board[oldRow][oldCol] = null;
+        this.movesNumber++;
+        piece.lastMove = this.movesNumber;
+        if(piece.type == 'p') {
+            if(Math.abs(oldCol - newCol) == 2) {
+                piece.pawnMoveTwoCells = true;
+            } else piece.pawnMoveTwoCells = false;
+        }
         return capturedPiece;
     }
 
@@ -399,7 +405,24 @@ class ChessLogic {
             if (this.isCellEnemy(row + 1, col + frontDir, piece.color)) {
                 pseudoLegalMoveCoords.push(this.num2Coord(row + 1, col + frontDir));
             }
-            // en passant, promotion?
+            // en passant
+            if (this.isCellEnemy(row - 1, col, piece.color)) {
+                let enemy = this.board[row - 1][col];
+                if(enemy.type == 'p' && enemy.lastMove == this.movesNumber && enemy.pawnMoveTwoCells) {
+                    let coord = this.num2Coord(row - 1, col + frontDir);
+                    coord.push(SpecialMoveCode.EN_PASSANT);
+                    pseudoLegalMoveCoords.push(coord);
+                }
+            }
+            if (this.isCellEnemy(row + 1, col, piece.color)) {
+                let enemy = this.board[row + 1][col];
+                if(enemy.type == 'p' && enemy.lastMove == this.movesNumber && enemy.pawnMoveTwoCells) {
+                    let coord = this.num2Coord(row + 1, col + frontDir);
+                    coord.push(SpecialMoveCode.EN_PASSANT);
+                    pseudoLegalMoveCoords.push(coord);
+                }
+            }
+            // promotion
         }
         return pseudoLegalMoveCoords;
     }
@@ -538,6 +561,10 @@ class Game {
         this.logic.createPiece(color, type, row, col);
         this.ui.createPieceUI(color, type, row, col);
     }
+    removePiece(row, col) {
+        this.logic.removePiece(row, col);
+        this.ui.removePieceUI(row, col);
+    }
     movePiece(oldRow, oldCol, newRow, newCol) {
         this.logic.movePiece(oldRow, oldCol, newRow, newCol);
         this.ui.movePieceUI(oldRow, oldCol, newRow, newCol);
@@ -627,6 +654,10 @@ class Game {
                 this.movePiece(7, spCol, 5, pathCol);
             } else if (path[2] == SpecialMoveCode.QUEEN_SIDE_CASTLING) {
                 this.movePiece(0, spCol, 3, pathCol);
+            } else if (path[2] == SpecialMoveCode.EN_PASSANT) {
+                this.removePiece(pathRow, spCol);
+            } else if (path[2] == SpecialMoveCode.PROMOTION) {
+                // promote
             }
         }
         // remove highlight
