@@ -391,25 +391,34 @@ class ChessLogic {
         } else if (piece.type == 'p') {
             let frontDir = (piece.color == 'wh') ? 1 : -1;
             if (this.isCellEmpty(row, col + frontDir)) {
-                // promotion
-                // 1 -> 6, -1 -> 1
+                let coord = this.num2Coord(row, col + frontDir);
+                // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
-                    let coord = this.num2Coord(row, col + frontDir);
                     coord.push(SpecialMoveCode.PROMOTION);
-                    pseudoLegalMoveCoords.push(coord);
-                } else pseudoLegalMoveCoords.push(this.num2Coord(row, col + frontDir));
+                }
+                pseudoLegalMoveCoords.push(coord);
             }
             if (col == 3.5 - frontDir * 2.5 && this.isCellEmpty(row, col + frontDir)) {
-                // 1 -> 1, -1 -> 6
+                // white 1, black 6
                 if (this.isCellEmpty(row, col + frontDir * 2)) {
                     pseudoLegalMoveCoords.push(this.num2Coord(row, col + frontDir * 2));
                 }
             }
             if (this.isCellEnemy(row - 1, col + frontDir, piece.color)) {
-                pseudoLegalMoveCoords.push(this.num2Coord(row - 1, col + frontDir));
+                let coord = this.num2Coord(row - 1, col + frontDir);
+                // promotion - white 6, black 1
+                if(col == 3.5 + 2.5 * frontDir) {
+                    coord.push(SpecialMoveCode.PROMOTION);
+                }
+                pseudoLegalMoveCoords.push(coord);
             }
             if (this.isCellEnemy(row + 1, col + frontDir, piece.color)) {
-                pseudoLegalMoveCoords.push(this.num2Coord(row + 1, col + frontDir));
+                let coord = this.num2Coord(row + 1, col + frontDir);
+                // promotion - white 6, black 1
+                if(col == 3.5 + 2.5 * frontDir) {
+                    coord.push(SpecialMoveCode.PROMOTION);
+                }
+                pseudoLegalMoveCoords.push(coord);
             }
             // en passant
             if (this.isCellEnemy(row - 1, col, piece.color)) {
@@ -464,9 +473,9 @@ class ChessLogic {
 class ChessUI {
     constructor() {
         this.boardUI = document.getElementsByClassName('board')[0];
-        this.boardBGUI = this.boardUI.getElementsByClassName('board-bg')[0];
-        this.boardPCSUI = this.boardUI.getElementsByClassName('board-pcs')[0];
-        this.boardMVSUI = this.boardUI.getElementsByClassName('board-mvs')[0];
+        this.boardBGUI = this.boardUI.getElementsByClassName('board-background')[0];
+        this.boardPCSUI = this.boardUI.getElementsByClassName('board-pieces')[0];
+        this.boardMVSUI = this.boardUI.getElementsByClassName('board-moves')[0];
     }
     squareNum2Coord(squareNum) {
         return new Array(parseInt(squareNum[7]), parseInt(squareNum[8]));
@@ -650,6 +659,9 @@ class Game {
         }
     }
     onPathClick(path) {
+        if (path.length > 2 && path[2] == SpecialMoveCode.PROMOTION) {
+            //
+        }
         let spRow = this.selectedPieceCoord[0], spCol = this.selectedPieceCoord[1];
         let pathRow = path[0], pathCol = path[1];
         // move selected piece to path
@@ -661,8 +673,6 @@ class Game {
                 this.movePiece(0, spCol, 3, pathCol);
             } else if (path[2] == SpecialMoveCode.EN_PASSANT) {
                 this.removePiece(pathRow, spCol);
-            } else if (path[2] == SpecialMoveCode.PROMOTION) {
-                // promote
             }
         }
         // remove highlight
@@ -674,6 +684,9 @@ class Game {
         this.ui.createHighlightUI(pathRow, pathCol);
         this.selectedPieceCoord = null;
         this.switchTurn();
+    }
+    onPromotionClick() {
+
     }
 }
 

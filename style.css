@@ -104,7 +104,50 @@ body {
     border-color: black;
     border-style: solid;
     border-width: calc(var(--cell-size) * 0.08);
-
+}
+.board-popup {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+	z-index: 4;
+    background-color: rgba(0, 0, 0, 0.25);
+}
+.promote-selection {
+    width: 55%;
+    height: 17.5%;
+    position: absolute;
+    left: 22.5%;
+    top: 41.25%;
+    background-color: #404040;
+    border-radius: 5px;
+    box-shadow: black 0 0 5px;
+}
+.promote-selection .btn-close::after {
+    content: '\2716';
+    font-size: calc(var(--cell-size) * 0.1);
+    cursor: pointer;
+    margin-top: 2px;
+}
+.promote-selection > div {
+    justify-content: center;
+    display: flex;
+}
+.promote-selection .piece {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    overflow: hidden;
+    position: static;
+    cursor: pointer;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+.promote-selection.wh .piece::after {
+    color: white;
+    text-shadow: black 0 0 5px;
+}
+.promote-selection.bl .piece::after {
+    color: black;
+    text-shadow: white 0 0 5px;
 }
 .square-00 { transform: translate(0, 700%); }
 .square-01 { transform: translate(0, 600%); }

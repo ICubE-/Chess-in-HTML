@@ -12,7 +12,7 @@
         Hello world!
         <div class="header"></div>
         <div class="board" onselectstart="() => {return false;}">
-			<div class="board-bg" onclick="game.onBlankClick();">
+			<div class="board-background" onclick="game.onBlankClick();">
 				<div class="cell cell-light square-07"></div>
 				<div class="cell cell-dark  square-17"></div>
 				<div class="cell cell-light square-27"></div>
@@ -78,8 +78,9 @@
 				<div class="cell cell-dark  square-60"></div>
 				<div class="cell cell-light square-70"></div>
 				<div class="highlight square-41"></div>
+				<div class="highlight blue square-30"></div>
 			</div>
-			<div class="board-pcs">
+			<div class="board-pieces">
 				<div class="piece bl r square-77"></div>
 				<div class="piece bl n square-67"></div>
 				<div class="piece bl b square-57"></div>
@@ -113,16 +114,30 @@
 				<div class="piece wh n square-10"></div>
 				<div class="piece wh r square-00"></div>
 			</div>
-			<div class="board-mvs">
+			<div class="board-moves">
 				<div class="move empty square-43"></div>
 				<div class="move empty square-42"></div>
 				<div class="move occupied square-32"></div>
 				<div class="move occupied square-52"></div>
 			</div>
+			<div class="board-popup">
+				<div class="promote-selection wh">
+					<div class="btn-close"></div>
+					<div>
+						<div class="piece q"></div>
+						<div class="piece r"></div>
+						<div class="piece b"></div>
+						<div class="piece n"></div>
+					</div>
+				</div>
+				<div class="game-result">
+
+				</div>
+			</div>
         </div>
         Bye world! &#9812;
     </body>
-	<script src="script.js" type="text/javascript"></script>
+	<!--<script src="script.js" type="text/javascript"></script>-->
 	<script>
 		/**/
 	</script>
