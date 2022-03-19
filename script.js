@@ -391,10 +391,16 @@ class ChessLogic {
         } else if (piece.type == 'p') {
             let frontDir = (piece.color == 'wh') ? 1 : -1;
             if (this.isCellEmpty(row, col + frontDir)) {
-                pseudoLegalMoveCoords.push(this.num2Coord(row, col + frontDir));
+                // promotion
+                // 1 -> 6, -1 -> 1
+                if(col == 3.5 + 2.5 * frontDir) {
+                    let coord = this.num2Coord(row, col + frontDir);
+                    coord.push(SpecialMoveCode.PROMOTION);
+                    pseudoLegalMoveCoords.push(coord);
+                } else pseudoLegalMoveCoords.push(this.num2Coord(row, col + frontDir));
             }
-            // 1 -> 1, -1 -> 6
-            if (col == Math.floor((7 - frontDir * 5) / 2) && this.isCellEmpty(row, col + frontDir)) {
+            if (col == 3.5 - frontDir * 2.5 && this.isCellEmpty(row, col + frontDir)) {
+                // 1 -> 1, -1 -> 6
                 if (this.isCellEmpty(row, col + frontDir * 2)) {
                     pseudoLegalMoveCoords.push(this.num2Coord(row, col + frontDir * 2));
                 }
@@ -422,7 +428,6 @@ class ChessLogic {
                     pseudoLegalMoveCoords.push(coord);
                 }
             }
-            // promotion
         }
         return pseudoLegalMoveCoords;
     }
