@@ -15,7 +15,37 @@ class Piece {
     }
 }
 
-class SpecialMoveCode {
+class Coord {
+    /**
+     * @param  {number} r
+     * @param  {number} c
+     */
+    constructor(r, c) {
+        this.r = r;
+        this.c = c;
+    }
+    isValid() {
+        return this.r >= 0 && this.r < 8 && this.c >= 0 && this.c < 8;
+    }
+    toSquareNum() {
+        return 'square-' + this.r.toString() + this.c.toString();
+    }
+    /**
+     * @param  {string} squareNum
+     */
+    static squareNumToCoord(squareNum) {
+        return new Coord(parseInt(squareNum[7]), parseInt(squareNum[8]));
+    }
+}
+
+class Move {
+    constructor(board, start, end) {
+        
+    }
+}
+
+class MoveCode {
+    static GENERAL = 0;
     static KING_SIDE_CASTLING = 10;
     static QUEEN_SIDE_CASTLING = 11;
     static EN_PASSANT = 20;
@@ -347,7 +377,7 @@ class ChessLogic {
                     && this.isCellEmpty(6, col) && !this.isCellUnderAttack(6, col, piece.color)
                 ) {
                     let coord = this.num2Coord(6, col);
-                    coord.push(SpecialMoveCode.KING_SIDE_CASTLING);
+                    coord.push(MoveCode.KING_SIDE_CASTLING);
                     pseudoLegalMoveCoords.push(coord);
                 }
                 let queenSide = this.board[0][col];
@@ -358,7 +388,7 @@ class ChessLogic {
                     && this.isCellEmpty(2, col) && !this.isCellUnderAttack(2, col, piece.color)
                 ) {
                     let coord = this.num2Coord(2, col);
-                    coord.push(SpecialMoveCode.QUEEN_SIDE_CASTLING);
+                    coord.push(MoveCode.QUEEN_SIDE_CASTLING);
                     pseudoLegalMoveCoords.push(coord);
                 }
             }
@@ -402,7 +432,7 @@ class ChessLogic {
                 let coord = this.num2Coord(row, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
-                    coord.push(SpecialMoveCode.PROMOTION_SELECTION);
+                    coord.push(MoveCode.PROMOTION_SELECTION);
                 }
                 pseudoLegalMoveCoords.push(coord);
             }
@@ -416,7 +446,7 @@ class ChessLogic {
                 let coord = this.num2Coord(row - 1, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
-                    coord.push(SpecialMoveCode.PROMOTION_SELECTION);
+                    coord.push(MoveCode.PROMOTION_SELECTION);
                 }
                 pseudoLegalMoveCoords.push(coord);
             }
@@ -424,7 +454,7 @@ class ChessLogic {
                 let coord = this.num2Coord(row + 1, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
-                    coord.push(SpecialMoveCode.PROMOTION_SELECTION);
+                    coord.push(MoveCode.PROMOTION_SELECTION);
                 }
                 pseudoLegalMoveCoords.push(coord);
             }
@@ -433,7 +463,7 @@ class ChessLogic {
                 let enemy = this.board[row - 1][col];
                 if(enemy.type == 'p' && enemy.lastMove == this.movesNumber && enemy.pawnMoveTwoCells) {
                     let coord = this.num2Coord(row - 1, col + frontDir);
-                    coord.push(SpecialMoveCode.EN_PASSANT);
+                    coord.push(MoveCode.EN_PASSANT);
                     pseudoLegalMoveCoords.push(coord);
                 }
             }
@@ -441,7 +471,7 @@ class ChessLogic {
                 let enemy = this.board[row + 1][col];
                 if(enemy.type == 'p' && enemy.lastMove == this.movesNumber && enemy.pawnMoveTwoCells) {
                     let coord = this.num2Coord(row + 1, col + frontDir);
-                    coord.push(SpecialMoveCode.EN_PASSANT);
+                    coord.push(MoveCode.EN_PASSANT);
                     pseudoLegalMoveCoords.push(coord);
                 }
             }
@@ -675,7 +705,7 @@ class Game {
         }
     }
     onPathClick(path) {
-        if (path.length > 2 && path[2] == SpecialMoveCode.PROMOTION_SELECTION) {
+        if (path.length > 2 && path[2] == MoveCode.PROMOTION_SELECTION) {
             let promoteSelectionWindow = document.getElementsByClassName('promote-selection')[0];
             promoteSelectionWindow.classList.remove('wh', 'bl');
             let selectedPiece = this.logic.board[this.selectedPieceCoord[0]][this.selectedPieceCoord[1]];
@@ -695,13 +725,13 @@ class Game {
         // move selected piece to path
         this.movePiece(spRow, spCol, pathRow, pathCol);
         if (path.length > 2) {
-            if (path[2] == SpecialMoveCode.KING_SIDE_CASTLING) {
+            if (path[2] == MoveCode.KING_SIDE_CASTLING) {
                 this.movePiece(7, spCol, 5, pathCol);
-            } else if (path[2] == SpecialMoveCode.QUEEN_SIDE_CASTLING) {
+            } else if (path[2] == MoveCode.QUEEN_SIDE_CASTLING) {
                 this.movePiece(0, spCol, 3, pathCol);
-            } else if (path[2] == SpecialMoveCode.EN_PASSANT) {
+            } else if (path[2] == MoveCode.EN_PASSANT) {
                 this.removePiece(pathRow, spCol);
-            } else if (path[2] == SpecialMoveCode.PROMOTION_QUEEN) {
+            } else if (path[2] == MoveCode.PROMOTION_QUEEN) {
                 this.changePiece(pathRow, pathCol, 'q');
             }
         }
@@ -720,16 +750,16 @@ class Game {
         promoteSelectionWindow.setAttribute('hidden', '');
         document.getElementsByClassName('board-popup')[0].setAttribute('hidden', '');
         if(type == 'q') {
-            path[2] = SpecialMoveCode.PROMOTION_QUEEN;
+            path[2] = MoveCode.PROMOTION_QUEEN;
             this.onPathClick(path);
         } else if(type == 'r') {
-            path[2] = SpecialMoveCode.PROMOTION_ROOK;
+            path[2] = MoveCode.PROMOTION_ROOK;
             this.onPathClick(path);
         } else if(type == 'b') {
-            path[2] = SpecialMoveCode.PROMOTION_BISHOP;
+            path[2] = MoveCode.PROMOTION_BISHOP;
             this.onPathClick(path);
         } else if(type == 'n') {
-            path[2] = SpecialMoveCode.PROMOTION_KNIGHT;
+            path[2] = MoveCode.PROMOTION_KNIGHT;
             this.onPathClick(path);
         }
     }
