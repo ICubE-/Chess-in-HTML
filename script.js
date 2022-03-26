@@ -19,7 +19,11 @@ class SpecialMoveCode {
     static KING_SIDE_CASTLING = 10;
     static QUEEN_SIDE_CASTLING = 11;
     static EN_PASSANT = 20;
-    static PROMOTION = 30;
+    static PROMOTION_SELECTION = 30;
+    static PROMOTION_QUEEN = 31;
+    static PROMOTION_ROOK = 32;
+    static PROMOTION_BISHOP = 33;
+    static PROMOTION_KNIGHT = 34;
 }
 
 class ChessLogic {
@@ -69,6 +73,10 @@ class ChessLogic {
             } else piece.pawnMoveTwoCells = false;
         }
         return capturedPiece;
+    }
+
+    changePiece(row, col, type) {
+        this.board[row][col].type = type;
     }
 
     /**
@@ -394,7 +402,7 @@ class ChessLogic {
                 let coord = this.num2Coord(row, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
-                    coord.push(SpecialMoveCode.PROMOTION);
+                    coord.push(SpecialMoveCode.PROMOTION_SELECTION);
                 }
                 pseudoLegalMoveCoords.push(coord);
             }
@@ -408,7 +416,7 @@ class ChessLogic {
                 let coord = this.num2Coord(row - 1, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
-                    coord.push(SpecialMoveCode.PROMOTION);
+                    coord.push(SpecialMoveCode.PROMOTION_SELECTION);
                 }
                 pseudoLegalMoveCoords.push(coord);
             }
@@ -416,7 +424,7 @@ class ChessLogic {
                 let coord = this.num2Coord(row + 1, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
-                    coord.push(SpecialMoveCode.PROMOTION);
+                    coord.push(SpecialMoveCode.PROMOTION_SELECTION);
                 }
                 pseudoLegalMoveCoords.push(coord);
             }
@@ -473,9 +481,9 @@ class ChessLogic {
 class ChessUI {
     constructor() {
         this.boardUI = document.getElementsByClassName('board')[0];
-        this.boardBGUI = this.boardUI.getElementsByClassName('board-background')[0];
-        this.boardPCSUI = this.boardUI.getElementsByClassName('board-pieces')[0];
-        this.boardMVSUI = this.boardUI.getElementsByClassName('board-moves')[0];
+        this.boardBackgroundUI = this.boardUI.getElementsByClassName('board-background')[0];
+        this.boardPiecesUI = this.boardUI.getElementsByClassName('board-pieces')[0];
+        this.boardMovesUI = this.boardUI.getElementsByClassName('board-moves')[0];
     }
     squareNum2Coord(squareNum) {
         return new Array(parseInt(squareNum[7]), parseInt(squareNum[8]));
@@ -496,7 +504,7 @@ class ChessUI {
         pieceUI.addEventListener('click', function () {
             game.onPieceClick(pieceUI.classList[3]);
         });
-        this.boardPCSUI.appendChild(pieceUI);
+        this.boardPiecesUI.appendChild(pieceUI);
         return pieceUI;
     }
     removePieceUI(row, col) {
@@ -508,6 +516,10 @@ class ChessUI {
         this.removePieceUI(newRow, newCol);
         pieceUI.classList.remove('square-' + oldRow + oldCol);
         pieceUI.classList.add('square-' + newRow + newCol);
+    }
+    changePieceUI(row, col, type) {
+        let pieceUI = this.boardUI.getElementsByClassName('piece square-' + row + col)[0];
+        pieceUI.classList.replace(pieceUI.classList[2], type)
     }
     clearHighlightUIs() {
         let highlights = this.boardUI.getElementsByClassName('highlight');
@@ -525,7 +537,7 @@ class ChessUI {
         let highlightUI = document.createElement('div');
         highlightUI.classList.add('highlight', 'square-' + row + col);
         if (type > 0) highlightUI.classList.add('blue');
-        this.boardBGUI.appendChild(highlightUI);
+        this.boardBackgroundUI.appendChild(highlightUI);
     }
     removeHighlightUI(row, col) {
         let highlightUIs = this.boardUI.getElementsByClassName('highlight square-' + row + col);
@@ -548,10 +560,10 @@ class ChessUI {
         pathUI.addEventListener('click', function () {
             game.onPathClick(path);
         });
-        this.boardMVSUI.appendChild(pathUI);
+        this.boardMovesUI.appendChild(pathUI);
     }
     clearBoardUIs() {
-        let pieceUIs = this.boardUI.getElementsByClassName('piece');
+        let pieceUIs = this.boardPiecesUI.getElementsByClassName('piece');
         while (pieceUIs.length > 0) {
             pieceUIs[0].remove();
         }
@@ -582,6 +594,10 @@ class Game {
     movePiece(oldRow, oldCol, newRow, newCol) {
         this.logic.movePiece(oldRow, oldCol, newRow, newCol);
         this.ui.movePieceUI(oldRow, oldCol, newRow, newCol);
+    }
+    changePiece(row, col, type) {
+        this.logic.changePiece(row, col, type);
+        this.ui.changePieceUI(row, col, type);
     }
     init() {
         this.clearBoard();
@@ -659,8 +675,20 @@ class Game {
         }
     }
     onPathClick(path) {
-        if (path.length > 2 && path[2] == SpecialMoveCode.PROMOTION) {
-            //
+        if (path.length > 2 && path[2] == SpecialMoveCode.PROMOTION_SELECTION) {
+            let promoteSelectionWindow = document.getElementsByClassName('promote-selection')[0];
+            promoteSelectionWindow.classList.remove('wh', 'bl');
+            let selectedPiece = this.logic.board[this.selectedPieceCoord[0]][this.selectedPieceCoord[1]];
+            promoteSelectionWindow.classList.add(selectedPiece.color);
+            promoteSelectionWindow.removeAttribute('hidden');
+            document.getElementsByClassName('board-popup')[0].removeAttribute('hidden');
+            let pieceSelections = promoteSelectionWindow.getElementsByClassName('piece');
+            for(let ps of pieceSelections) {
+                ps.addEventListener('click', function() {
+                    game.onPromotionClick(path, ps.classList[1]);
+                })
+            }
+            return;
         }
         let spRow = this.selectedPieceCoord[0], spCol = this.selectedPieceCoord[1];
         let pathRow = path[0], pathCol = path[1];
@@ -673,6 +701,8 @@ class Game {
                 this.movePiece(0, spCol, 3, pathCol);
             } else if (path[2] == SpecialMoveCode.EN_PASSANT) {
                 this.removePiece(pathRow, spCol);
+            } else if (path[2] == SpecialMoveCode.PROMOTION_QUEEN) {
+                this.changePiece(pathRow, pathCol, 'q');
             }
         }
         // remove highlight
@@ -685,8 +715,23 @@ class Game {
         this.selectedPieceCoord = null;
         this.switchTurn();
     }
-    onPromotionClick() {
-
+    onPromotionClick(path, type) {
+        let promoteSelectionWindow = document.getElementsByClassName('promote-selection')[0];
+        promoteSelectionWindow.setAttribute('hidden', '');
+        document.getElementsByClassName('board-popup')[0].setAttribute('hidden', '');
+        if(type == 'q') {
+            path[2] = SpecialMoveCode.PROMOTION_QUEEN;
+            this.onPathClick(path);
+        } else if(type == 'r') {
+            path[2] = SpecialMoveCode.PROMOTION_ROOK;
+            this.onPathClick(path);
+        } else if(type == 'b') {
+            path[2] = SpecialMoveCode.PROMOTION_BISHOP;
+            this.onPathClick(path);
+        } else if(type == 'n') {
+            path[2] = SpecialMoveCode.PROMOTION_KNIGHT;
+            this.onPathClick(path);
+        }
     }
 }
 
