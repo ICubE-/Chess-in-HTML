@@ -51,7 +51,7 @@ body {
     will-change: transform;
     cursor: pointer;
     transition-property: transform;
-    transition-duration: .5s;
+    transition-duration: 0.5s;
 }
 .piece::after {
     display: block;

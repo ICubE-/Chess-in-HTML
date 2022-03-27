@@ -27,8 +27,17 @@ class Coord {
     isValid() {
         return this.r >= 0 && this.r < 8 && this.c >= 0 && this.c < 8;
     }
+    getRowInChar() {
+        return (this.r + 9).toString(36).toUpperCase();
+    }
+    getNotation() {
+        return this.getRowInChar() + this.c.toString();
+    }
     toSquareNum() {
         return 'square-' + this.r.toString() + this.c.toString();
+    }
+    static isCoordValid(r, c) {
+        return r >= 0 && r < 8 && c >= 0 && c < 8;
     }
     /**
      * @param  {string} squareNum
@@ -39,9 +48,75 @@ class Coord {
 }
 
 class Move {
-    constructor(board, start, end) {
-        
+    /**
+     * @param  {Coord} startCoord
+     * @param  {Coord} endCoord
+     * @param  {number} halfMoveNumber
+     * @param  {Array<Array<Piece>>} boardBeforeMove
+     */
+    constructor(startCoord, endCoord, halfMoveNumber, boardBeforeMove) {
+        this.startCoord = startCoord;
+        this.endCoord = endCoord;
+        this.halfMoveNumber = halfMoveNumber;
+
+        this.movingPiece = boardBeforeMove[startCoord.r][startCoord.c];
+        this.capturedPiece = boardBeforeMove[endCoord.r][endCoord.c];
+        this.setNotation(boardBeforeMove);
     }
+    setNotation(boardBeforeMove) {
+        this.notation = '';
+        if(this.movingPiece.type != 'p') {
+            this.notation += this.movingPiece.type.toUpperCase();
+        }
+        //start if required
+        //
+        //
+        if(this.capturedPiece != null) {
+            this.notation += 'x';
+        }
+        this.notation += this.endCoord.getNotation();
+    }
+    updateNotation(isCheck, isCheckmate) {
+        if(isCheckmate) {
+            this.notation += '#';
+        } else if(isCheck) {
+            this.notation += '+';
+        }
+        return this.notation;
+    }
+    updateInfo(boardAfterMove) {
+        // called after real move
+
+        // detect check, checkmate
+        // update notation (check or checkmate)
+    }
+}
+
+class MoveCastling extends Move {
+    constructor(startCoord, endCoord, halfMoveNumber, board) {
+        if(endCoord.r == 6) {
+            this.side = 'k';
+            //this.additionalMove = new Move()
+        } else {
+            this.side = 'q';
+        }
+        super(startCoord, endCoord, halfMoveNumber, board);
+    }
+    setNotation(boardBeforeMove) {
+        if(this.side == 'k') {
+            this.notation = 'O-O';
+        } else {
+            this.notation = 'O-O-O';
+        }
+    }
+}
+
+class MoveEnPassant extends Move {
+    
+}
+
+class MovePromotion extends Move {
+
 }
 
 class MoveCode {
@@ -61,7 +136,7 @@ class ChessLogic {
         /** @type {Array<Array<Piece>>} */
         this.board = new Array();
         this.clearBoard();
-        this.movesNumber = 0;
+        this.halfMoveCount = 0;
     }
     clearBoard() {
         this.board = new Array();
@@ -71,9 +146,12 @@ class ChessLogic {
             this.board.push(r);
         }
     }
+    getPiece(coord) {
+        return this.board[coord.r][coord.c];
+    }
     createPiece(color, type, row, col) {
         this.removePiece(row, col);
-        let piece = new Piece(color, type, this.movesNumber);
+        let piece = new Piece(color, type, this.halfMoveCount);
         this.board[row][col] = piece;
     }
     removePiece(row, col) {
@@ -84,58 +162,44 @@ class ChessLogic {
         } else return null;
     }
     /**
-     * @param  {number} oldRow  The origin row of the piece.
-     * @param  {number} oldCol  The origin column of the piece.
-     * @param  {number} newRow  The destination row of the piece.
-     * @param  {number} newCol  The destination column of the piece.
-     * @returns  {Piece}  Captured piece by the move. Could be null.
+     * @param  {Move} move
      */
-    movePiece(oldRow, oldCol, newRow, newCol) {
-        let capturedPiece = this.removePiece(newRow, newCol);
-        let piece = this.board[oldRow][oldCol];
-        this.board[newRow][newCol] = piece;
-        this.board[oldRow][oldCol] = null;
-        this.movesNumber++;
-        piece.lastMove = this.movesNumber;
-        if(piece.type == 'p') {
+    movePiece(move) {
+        this.board[move.endCoord.r][move.endCoord.c] = move.movingPiece;
+        this.board[move.startCoord.r][move.startCoord.c] = null;
+        this.halfMoveCount++;
+        move.movingPiece.lastMove = this.halfMoveCount;
+        if(move.movingPiece.type == 'p') {
             if(Math.abs(oldCol - newCol) == 2) {
-                piece.pawnMoveTwoCells = true;
-            } else piece.pawnMoveTwoCells = false;
+                move.movingPiece.pawnMoveTwoCells = true;
+            } else move.movingPiece.pawnMoveTwoCells = false;
         }
-        return capturedPiece;
     }
+    // movePiece(oldRow, oldCol, newRow, newCol) {
+    //     let capturedPiece = this.removePiece(newRow, newCol);
+    //     let piece = this.board[oldRow][oldCol];
+    //     this.board[newRow][newCol] = piece;
+    //     this.board[oldRow][oldCol] = null;
+    //     this.halfMoveCount++;
+    //     piece.lastMove = this.halfMoveCount;
+    //     if(piece.type == 'p') {
+    //         if(Math.abs(oldCol - newCol) == 2) {
+    //             piece.pawnMoveTwoCells = true;
+    //         } else piece.pawnMoveTwoCells = false;
+    //     }
+    //     return capturedPiece;
+    // }
 
     changePiece(row, col, type) {
         this.board[row][col].type = type;
     }
 
-    /**
-     * Returns whether the coordinate is on the board or not.
-     * @param  {number} row  Row of the coordinate.
-     * @param  {number} col  Column of the coordinate.
-     * @returns  {boolean}  Whether the coordinate is on the board.
-     */
-    isCoordValid(row, col) {
-        return row >= 0 && row < 8 && col >= 0 && col < 8;
-    }
-
-    /**
-     * Returns the coordinate from row number and column number.
-     * @param  {number} row  Row of the coordinate.
-     * @param  {number} col  Column of the coordinate.
-     * @returns  {Array<number>}  The coordinate.
-     */
-    num2Coord(row, col) {
-        return new Array(row, col);
-    }
-
     isCellEmpty(row, col) {
-        return this.isCoordValid(row, col) && this.board[row][col] == null;
+        return Coord.isCoordValid(row, col) && this.board[row][col] == null;
     }
     isCellEnemy(row, col, color) {
-        return this.isCoordValid(row, col)
-            && this.board[row][col] != null
-            && this.board[row][col].color != color;
+        let piece = this.board[row][col];
+        return Coord.isCoordValid(row, col) && piece != null && piece.color != color;
     }
     isCellEmptyOrEnemy(row, col, color) {
         return this.isCellEmpty(row, col) || this.isCellEnemy(row, col, color);
@@ -146,7 +210,7 @@ class ChessLogic {
         // check king
         for (let i = kx - 1; i <= kx + 1; i++) {
             for (let j = ky - 1; j <= ky + 1; j++) {
-                if (this.isCoordValid(i, j) && this.board[i][j] != null) {
+                if (Coord.isCoordValid(i, j) && this.board[i][j] != null) {
                     let pc = this.board[i][j];
                     if (pc.color == oppositeColor && pc.type == 'k') {
                         return true;
@@ -193,7 +257,7 @@ class ChessLogic {
         }
         // check diagonal
         for (let i = 1; i < 7; i++) {
-            if (!this.isCoordValid(kx - i, ky - i)) {
+            if (!Coord.isCoordValid(kx - i, ky - i)) {
                 break;
             }
             let pc = this.board[kx - i][ky - i];
@@ -205,7 +269,7 @@ class ChessLogic {
             }
         }
         for (let i = 1; i < 7; i++) {
-            if (!this.isCoordValid(kx - i, ky + i)) {
+            if (!Coord.isCoordValid(kx - i, ky + i)) {
                 break;
             }
             let pc = this.board[kx - i][ky + i];
@@ -217,7 +281,7 @@ class ChessLogic {
             }
         }
         for (let i = 1; i < 7; i++) {
-            if (!this.isCoordValid(kx + i, ky - i)) {
+            if (!Coord.isCoordValid(kx + i, ky - i)) {
                 break;
             }
             let pc = this.board[kx + i][ky - i];
@@ -229,7 +293,7 @@ class ChessLogic {
             }
         }
         for (let i = 1; i < 7; i++) {
-            if (!this.isCoordValid(kx + i, ky + i)) {
+            if (!Coord.isCoordValid(kx + i, ky + i)) {
                 break;
             }
             let pc = this.board[kx + i][ky + i];
@@ -245,7 +309,7 @@ class ChessLogic {
         let knightY = new Array(-1, 1, -2, 2, -2, 2, -1, 1);
         for (let i = 0; i < 8; i++) {
             let x = kx + knightX[i], y = ky + knightY[i];
-            if (this.isCoordValid(x, y) && this.board[x][y] != null) {
+            if (Coord.isCoordValid(x, y) && this.board[x][y] != null) {
                 let pc = this.board[x][y];
                 if (pc.color == oppositeColor && pc.type == 'n') {
                     return true;
@@ -257,14 +321,14 @@ class ChessLogic {
         if (color == 'wh') py = ky + 1;
         else py = ky - 1;
         px = kx - 1;
-        if (this.isCoordValid(px, py) && this.board[px][py] != null) {
+        if (Coord.isCoordValid(px, py) && this.board[px][py] != null) {
             let pc = this.board[px][py];
             if (pc.color == oppositeColor && pc.type == 'p') {
                 return true;
             }
         }
         px = kx + 1;
-        if (this.isCoordValid(px, py) && this.board[px][py] != null) {
+        if (Coord.isCoordValid(px, py) && this.board[px][py] != null) {
             let pc = this.board[px][py];
             if (pc.color == oppositeColor && pc.type == 'p') {
                 return true;
@@ -279,7 +343,7 @@ class ChessLogic {
             for (let j = 0; j < 8; j++) {
                 let pc = this.board[i][j];
                 if (pc != null && pc.color == color && pc.type == type) {
-                    coords.push(this.num2Coord(i, j));
+                    coords.push(new Coord(i, j));
                 }
             }
         }
@@ -328,7 +392,7 @@ class ChessLogic {
         for (let i = 1; i < 8; i++) {
             let x = row + rowdir * i;
             let y = col + coldir * i;
-            if (!this.isCoordValid(x, y)) {
+            if (!Coord.isCoordValid(x, y)) {
                 // if searching cell is out of the board
                 break;
             }
@@ -336,12 +400,12 @@ class ChessLogic {
                 // if searching cell is a piece
                 if (this.board[x][y].color != color) {
                     // if color of the piece is opposite
-                    linearPseudoLegalMoves.push(this.num2Coord(x, y));
+                    linearPseudoLegalMoves.push(new Coord(x, y));
                 }
                 break;
             } else {
                 // if searching cell is empty
-                linearPseudoLegalMoves.push(this.num2Coord(x, y));
+                linearPseudoLegalMoves.push(new Coord(x, y));
             }
         }
         return linearPseudoLegalMoves;
@@ -361,7 +425,7 @@ class ChessLogic {
             for (let i = row - 1; i <= row + 1; i++) {
                 for (let j = col - 1; j <= col + 1; j++) {
                     if (this.isCellEmptyOrEnemy(i, j, piece.color)) {
-                        pseudoLegalMoveCoords.push(this.num2Coord(i, j));
+                        pseudoLegalMoveCoords.push(new Coord(i, j));
                     }
                 }
             }
@@ -376,7 +440,7 @@ class ChessLogic {
                     && this.isCellEmpty(5, col) && !this.isCellUnderAttack(5, col, piece.color)
                     && this.isCellEmpty(6, col) && !this.isCellUnderAttack(6, col, piece.color)
                 ) {
-                    let coord = this.num2Coord(6, col);
+                    let coord = new Coord(6, col);
                     coord.push(MoveCode.KING_SIDE_CASTLING);
                     pseudoLegalMoveCoords.push(coord);
                 }
@@ -387,7 +451,7 @@ class ChessLogic {
                     && this.isCellEmpty(3, col) && !this.isCellUnderAttack(3, col, piece.color)
                     && this.isCellEmpty(2, col) && !this.isCellUnderAttack(2, col, piece.color)
                 ) {
-                    let coord = this.num2Coord(2, col);
+                    let coord = new Coord(2, col);
                     coord.push(MoveCode.QUEEN_SIDE_CASTLING);
                     pseudoLegalMoveCoords.push(coord);
                 }
@@ -423,13 +487,13 @@ class ChessLogic {
             for (let i = 0; i < 8; i++) {
                 let x = row + dirX[i], y = col + dirY[i];
                 if (this.isCellEmptyOrEnemy(x, y, piece.color)) {
-                    pseudoLegalMoveCoords.push(this.num2Coord(x, y));
+                    pseudoLegalMoveCoords.push(new Coord(x, y));
                 }
             }
         } else if (piece.type == 'p') {
             let frontDir = (piece.color == 'wh') ? 1 : -1;
             if (this.isCellEmpty(row, col + frontDir)) {
-                let coord = this.num2Coord(row, col + frontDir);
+                let coord = new Coord(row, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
                     coord.push(MoveCode.PROMOTION_SELECTION);
@@ -439,11 +503,11 @@ class ChessLogic {
             if (col == 3.5 - frontDir * 2.5 && this.isCellEmpty(row, col + frontDir)) {
                 // white 1, black 6
                 if (this.isCellEmpty(row, col + frontDir * 2)) {
-                    pseudoLegalMoveCoords.push(this.num2Coord(row, col + frontDir * 2));
+                    pseudoLegalMoveCoords.push(new Coord(row, col + frontDir * 2));
                 }
             }
             if (this.isCellEnemy(row - 1, col + frontDir, piece.color)) {
-                let coord = this.num2Coord(row - 1, col + frontDir);
+                let coord = new Coord(row - 1, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
                     coord.push(MoveCode.PROMOTION_SELECTION);
@@ -451,7 +515,7 @@ class ChessLogic {
                 pseudoLegalMoveCoords.push(coord);
             }
             if (this.isCellEnemy(row + 1, col + frontDir, piece.color)) {
-                let coord = this.num2Coord(row + 1, col + frontDir);
+                let coord = new Coord(row + 1, col + frontDir);
                 // promotion - white 6, black 1
                 if(col == 3.5 + 2.5 * frontDir) {
                     coord.push(MoveCode.PROMOTION_SELECTION);
@@ -461,16 +525,16 @@ class ChessLogic {
             // en passant
             if (this.isCellEnemy(row - 1, col, piece.color)) {
                 let enemy = this.board[row - 1][col];
-                if(enemy.type == 'p' && enemy.lastMove == this.movesNumber && enemy.pawnMoveTwoCells) {
-                    let coord = this.num2Coord(row - 1, col + frontDir);
+                if(enemy.type == 'p' && enemy.lastMove == this.halfMoveCount && enemy.pawnMoveTwoCells) {
+                    let coord = new Coord(row - 1, col + frontDir);
                     coord.push(MoveCode.EN_PASSANT);
                     pseudoLegalMoveCoords.push(coord);
                 }
             }
             if (this.isCellEnemy(row + 1, col, piece.color)) {
                 let enemy = this.board[row + 1][col];
-                if(enemy.type == 'p' && enemy.lastMove == this.movesNumber && enemy.pawnMoveTwoCells) {
-                    let coord = this.num2Coord(row + 1, col + frontDir);
+                if(enemy.type == 'p' && enemy.lastMove == this.halfMoveCount && enemy.pawnMoveTwoCells) {
+                    let coord = new Coord(row + 1, col + frontDir);
                     coord.push(MoveCode.EN_PASSANT);
                     pseudoLegalMoveCoords.push(coord);
                 }
@@ -491,7 +555,7 @@ class ChessLogic {
         let ox = row, oy = col;
         let pseudoLegalMoveCoords = this.getPseudoLegalMoveCoords(ox, oy);
         for (let plmc of pseudoLegalMoveCoords.values()) {
-            let nx = plmc[0], ny = plmc[1];
+            let nx = plmc.r, ny = plmc.c;
             let color = this.board[ox][oy].color;
             let movingPiece = this.board[ox][oy];
             let capturedPiece = this.removePiece(nx, ny);
