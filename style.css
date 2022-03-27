@@ -50,6 +50,8 @@ body {
     left: 0;
     will-change: transform;
     cursor: pointer;
+    transition-property: transform;
+    transition-duration: .5s;
 }
 .piece::after {
     display: block;
