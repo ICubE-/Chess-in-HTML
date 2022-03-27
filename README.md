@@ -20,7 +20,7 @@ HTML, CSS, Javascript로 만든 체스 페이지.
 3. Detect checkmate, stalemate and show victory (Priority 2->3)
 4. Coordinates
 5. Redesign, insert credit
-6. Provide settings (board size, light/dark mode, flip board, turn notice, show legal moves, show check)
+6. Provide settings (board size, light/dark mode, flip board, turn notice, show legal moves, show check, dead pieces)
 7. Alert check (on-off)
 8. Start new game
 9. Save progress
