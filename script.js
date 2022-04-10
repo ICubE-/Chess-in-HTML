@@ -1,3 +1,8 @@
+class Color {
+    static white = 'wh';
+    static black = 'bl';
+}
+
 class Piece {
     /**
      * Creates a new piece.
@@ -23,6 +28,9 @@ class Coord {
     constructor(r, c) {
         this.r = r;
         this.c = c;
+    }
+    isEqual(coord) {
+        return this.r == coord.r && this.c == coord.c;
     }
     isValid() {
         return this.r >= 0 && this.r < 8 && this.c >= 0 && this.c < 8;
@@ -68,7 +76,7 @@ class Move {
         if(this.movingPiece.type != 'p') {
             this.notation += this.movingPiece.type.toUpperCase();
         }
-        //start if required
+        //start coord if required
         //
         //
         if(this.capturedPiece != null) {
@@ -596,7 +604,7 @@ class ChessUI {
         let pieceUI = this.createPieceTemplate(color, type);
         pieceUI.classList.add('square-' + row + col);
         pieceUI.addEventListener('click', function () {
-            game.onPieceClick(pieceUI.classList[3]);
+            game.onPieceClick(Coord.squareNumToCoord(pieceUI.classList[3]));
         });
         this.boardPiecesUI.appendChild(pieceUI);
         return pieceUI;
@@ -670,8 +678,10 @@ class Game {
     constructor() {
         this.logic = new ChessLogic();
         this.ui = new ChessUI();
-        this.selectedPieceCoord = null; // selectedPieceCoord
-        this.turn = ''; // 'wh': white, 'bl': black
+        /**@type {Coord} */
+        this.selectedCoord = null; // selectedPieceCoord
+        /**@type {Color} */
+        this.turn = null; // 'wh': white, 'bl': black
     }
     clearBoard() {
         game.logic.clearBoard();
@@ -730,39 +740,32 @@ class Game {
     }
     start() {
         this.init();
-        this.selectedPieceCoord = null;
-        this.turn = 'wh';
+        this.selectedCoord = null;
+        this.turn = Color.white;
     }
     switchTurn() {
         this.turn = (this.turn == 'wh') ? 'bl' : 'wh';
     }
     onBlankClick() {
-        if (this.selectedPieceCoord == null) return;
-        // remove selected piece highlight
-        this.ui.removeHighlightUI(this.selectedPieceCoord[0], this.selectedPieceCoord[1]);
+        if (this.selectedCoord == null) return;
+        this.ui.removeHighlightUI(this.selectedCoord);
         this.ui.clearBlueHighlightUIs();
-        // clear all paths
         this.ui.clearPathUIs();
-        this.selectedPieceCoord = null;
+        this.selectedCoord = null;
     }
-    onPieceClick(squareNum) {
-        // handling the case of same-piece-clicking
-        if (this.selectedPieceCoord != null && this.ui.coord2SquareNum(this.selectedPieceCoord) == squareNum) {
+    /** @param {Coord} coord */
+    onPieceClick(coord) {
+        if (this.selectedCoord.isEqual(coord)) {
             this.onBlankClick();
             return;
         }
-        // cancel selection
         this.onBlankClick();
-        // handling the turn
-        let coord = this.ui.squareNum2Coord(squareNum);
-        if (!(this.turn == this.logic.board[coord[0]][coord[1]].color)) {
+        if (!(this.turn == this.logic.board[coord.r][coord.c].color)) {
             return;
         }
-        this.selectedPieceCoord = coord;
-        // create selected piece highlight
-        this.ui.createHighlightUI(coord[0], coord[1]);
-        // create paths
-        let paths = this.logic.getLegalMoveCoords(coord[0], coord[1]);
+        this.selectedCoord = coord;
+        this.ui.createHighlightUI(this.selectedCoord);
+        let paths = this.logic.getLegalMoveCoords(coord);
         for (let path of paths.values()) {
             this.ui.createPathUI(path);
             if (path.length > 2) this.ui.createHighlightUI(path[0], path[1], path[2]);
@@ -772,7 +775,7 @@ class Game {
         if (path.length > 2 && path[2] == MoveCode.PROMOTION_SELECTION) {
             let promoteSelectionWindow = document.getElementsByClassName('promote-selection')[0];
             promoteSelectionWindow.classList.remove('wh', 'bl');
-            let selectedPiece = this.logic.board[this.selectedPieceCoord[0]][this.selectedPieceCoord[1]];
+            let selectedPiece = this.logic.board[this.selectedCoord[0]][this.selectedCoord[1]];
             promoteSelectionWindow.classList.add(selectedPiece.color);
             promoteSelectionWindow.removeAttribute('hidden');
             document.getElementsByClassName('board-popup')[0].removeAttribute('hidden');
@@ -784,7 +787,7 @@ class Game {
             }
             return;
         }
-        let spRow = this.selectedPieceCoord[0], spCol = this.selectedPieceCoord[1];
+        let spRow = this.selectedCoord[0], spCol = this.selectedCoord[1];
         let pathRow = path[0], pathCol = path[1];
         // move selected piece to path
         this.movePiece(spRow, spCol, pathRow, pathCol);
@@ -806,7 +809,7 @@ class Game {
         // create previous move highlight
         this.ui.createHighlightUI(spRow, spCol);
         this.ui.createHighlightUI(pathRow, pathCol);
-        this.selectedPieceCoord = null;
+        this.selectedCoord = null;
         this.switchTurn();
     }
     onPromotionClick(path, type) {
