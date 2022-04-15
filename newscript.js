@@ -26,6 +26,8 @@ class Game {
         // detect mate
         // update move's info
         // end if mate
+        this.halfMoveCount++;
+
     }
     static undo(move) {
 
@@ -52,6 +54,24 @@ class GameControl {
 
 class GameUI {
 
+}
+
+class GameLogic {
+    static isInCheckmate(color) {
+        return this.isInCheck(color) && this.isAnyPieceMovable(color);
+    }
+    static isInStalemate(color) {
+        return !this.isInCheck(color) && this.isAnyPieceMovable(color);
+    }
+    static isInCheck(color) {
+
+    }
+    static isAnyPieceMovable(color) {
+
+    }
+    static getLegalMoves(coord) {
+
+    }
 }
 
 class Move {
@@ -92,7 +112,18 @@ class MovePromotion extends Move {
 }
 
 class Board {
+    constructor() {
+        this.arr = new Array();
+        let meansNoPieceMoved = {
+            [Color.WHITE]: false, 
+            [Color.BLACK]: false, 
+        };
+        this.kingHasMoved = meansNoPieceMoved;
+        this.
+    }
+    setup() {
 
+    }
 }
 
 class Coord {
@@ -100,10 +131,9 @@ class Coord {
 }
 
 class Piece {
-    constructor(color, type, hasMoved = false) {
+    constructor(color, type) {
         this.color = color;
         this.type = type;
-        this.hasMoved = hasMoved;
     }
 }
 
