@@ -25,6 +25,7 @@ class Game {
 
         this.halfMoveCount++;
         this.turn = Color.opponent(this.turn);
+        this.moveHistory.push(move);
         // update move history
     }
     static undo(move) {
@@ -74,6 +75,9 @@ class GameLogic {
     static isAnyPieceMovable(color) {
 
     }
+    static isCellUnderAttack(coord, color) {
+
+    }
 
     static getLegalMoves(coord) {
         let legalMoves = new Array();
@@ -108,7 +112,45 @@ class GameLogic {
         }
     }
     static getPseudoLegalMovesOfKing(coord) {
-
+        let pseudoLegalMoves = new Array();
+        let color = Game.board.getPiece(coord).color;
+        let rowDiffs = new Array(-1, -1, -1,  0, 0,  1, 1, 1);
+        let colDiffs = new Array(-1,  0,  1, -1, 1, -1, 0, 1);
+        for (let i = 0; i < 8; i++) {
+            let r = coord.r + rowDiffs[i], c = coord.c + colDiffs[i];
+            if (this.isCellEmptyOrEnemy(r, c, color)) {
+                pseudoLegalMoves.push(new Move(coord, new Coord(r, c)));
+            }
+        }
+        // Castling
+        let c = (color == Color.WHITE)? 0 : 7;
+        if(coord.r == 4 && coord.c == c && !this.hasAnyPieceMovedFrom(new Coord(4, c))) {
+            let kingSide = Game.board.getPiece(new Coord(7, c));
+            if (kingSide != null && kingSide.color == color
+                && kingSide.type == PieceType.ROOK && !this.hasAnyPieceMovedFrom(new Coord(7, c))
+                && !this.isCellUnderAttack(new Coord(4, c), color)
+                && this.isCellEmpty(new Coord(5, c)) && !this.isCellUnderAttack(new Coord(5, c), color)
+                && this.isCellEmpty(new Coord(6, c)) && !this.isCellUnderAttack(new Coord(6, c), color)
+            ) {
+                pseudoLegalMoves.push(new MoveCastling(MoveCastling.KING_SIDE_CASTLING, color));
+            }
+            let queenSide = Game.board.getPiece(new Coord(0, c));
+            if (queenSide != null && queenSide.color == color
+                && queenSide.type == PieceType.ROOK && !this.hasAnyPieceMovedFrom(new Coord(0, c))
+                && !this.isCellUnderAttack(new Coord(4, c), color)
+                && this.isCellEmpty(new Coord(3, c)) && !this.isCellUnderAttack(new Coord(3, c), color)
+                && this.isCellEmpty(new Coord(2, c)) && !this.isCellUnderAttack(new Coord(2, c), color)
+            ) {
+                pseudoLegalMoves.push(new MoveCastling(MoveCastling.QUEEN_SIDE_CASTLING, color));
+            }
+        }
+    }
+    static hasAnyPieceMovedFrom(coord) {
+        let hasMoved = false;
+        for(let move of Game.moveHistory.values()) {
+            hasMoved ||= move.fromCoord.r == coord.r && move.toCoord.c == coord.c;
+        }
+        return hasMoved;
     }
     static getPseudoLegalMovesOfQueen(coord) {
         let tmp = new Array();
@@ -139,17 +181,71 @@ class GameLogic {
         return tmp.flat();
     }
     static getPseudoLegalMovesOfKnight(coord) {
-        
+        let pseudoLegalMoves = new Array();
+        let color = Game.board.getPiece(coord).color;
+        let rowDiffs = new Array(-2, -2, -1, -1,  1, 1,  2, 2);
+        let colDiffs = new Array(-1,  1, -2,  2, -2, 2, -1, 1);
+        for (let i = 0; i < 8; i++) {
+            let r = coord.r + rowDiffs[i], c = coord.c + colDiffs[i];
+            if (this.isCellEmptyOrEnemy(r, c, color)) {
+                pseudoLegalMoves.push(new Move(coord, new Coord(r, c)));
+            }
+        }
+        return pseudoLegalMoves;
     }
     static getPseudoLegalMovesOfPawn(coord) {
-        
+        let pseudoLegalMoves = new Array();
+        let color = Game.board.getPiece(coord).color;
+        let frontDir = (color == Color.WHITE)? 1 : -1;
+        let startCol = (color == Color.WHITE)? 1 : 6;
+        let promotionCol = (color == Color.WHITE)? 6 : 1;
+
+        let frontCoord = new Coord(coord.r, coord.c + frontDir);
+        let twiceFrontCoord = new Coord(coord.r, coord.c + frontDir * 2);
+        if (this.isCellEmpty(frontCoord)) {
+            if(coord.c == promotionCol) {
+                pseudoLegalMoves.push(new MovePromotion(coord, frontCoord));
+            } else {
+                pseudoLegalMoves.push(new Move(coord, frontCoord));
+            }
+
+            if(coord.c == startCol && this.isCellEmpty(twiceFrontCoord)) {
+                pseudoLegalMoves.push(new Move(coord, twiceFrontCoord));
+            }
+        }
+        let diagonalCoord1 = new Coord(coord.r - 1, coord.c + frontDir);
+        if (this.isCellEnemy(diagonalCoord1, color)) {
+            if(coord.c == promotionCol) {
+                pseudoLegalMoves.push(new MovePromotion(coord, diagonalCoord1));
+            } else {
+                pseudoLegalMoves.push(new Move(coord, diagonalCoord1));
+            }
+        }
+        let diagonalCoord2 = new Coord(coord.r + 1, coord.c + frontDir);
+        if (this.isCellEnemy(diagonalCoord2, color)) {
+            if(coord.c == promotionCol) {
+                pseudoLegalMoves.push(new MovePromotion(coord, diagonalCoord2));
+            } else {
+                pseudoLegalMoves.push(new Move(coord, diagonalCoord2));
+            }
+        }
+        // En passant
+        let sideCoord1 = new Coord(coord.r - 1, coord.c);
+        if (this.isCellEnemy(sideCoord1, color)) {
+            let enemy = Game.board.getPiece(sideCoord1);
+            /*if(enemy.type == PieceType.PAWN && //enemy.lastMove == this.halfMoveCount && enemy.pawnMoveTwoCells) {
+                let coord = new Coord(row - 1, col + frontDir);
+                coord.push(MoveCode.EN_PASSANT);
+                pseudoLegalMoveCoords.push(coord);
+            }*/
+        }
     }
 
-    static getLinearPseudoLegalMoves(coord, rowdir, coldir) {
-        let color = Game.board.getPiece(coord).color;
+    static getLinearPseudoLegalMoves(coord, rowDir, colDir) {
         let linearPseudoLegalMoves = new Array();
+        let color = Game.board.getPiece(coord).color;
         for (let i = 1; i < 8; i++) {
-            let searchingCoord = new Coord(coord.r + i*rowdir, coord.c + i*coldir);
+            let searchingCoord = new Coord(coord.r + i*rowDir, coord.c + i*colDir);
             if (!searchingCoord.isOnBoard()) {
                 break;
             }
@@ -188,12 +284,17 @@ class Move {
 }
 
 class MoveCastling extends Move {
-    static KING_SIDE_CASTLING = 'ksc';
-    static QUEEN_SIDE_CASTLING = 'qsc';
+    static KING_SIDE_CASTLING = 'ksc-6-O-O';
+    static QUEEN_SIDE_CASTLING = 'qsc-2-O-O-O';
 
     constructor(castlingSide, color) {
         this.castlingSide = castlingSide;
         this.color = color;
+        
+        let column = (color == Color.WHITE)? 0 : 7;
+        let rowTo = parseInt(castlingSide[4]);
+        this.fromCoord = new Coord(4, column);
+        this.toCoord = new Coord(rowTo, column);
     }
 }
 
@@ -206,12 +307,13 @@ class MoveEnPassant extends Move {
 }
 
 class MovePromotion extends Move {
-    constructor(fromCoord, toCoord, color, type, capturedPiece) {
+    constructor(fromCoord, toCoord, type = undefined) {
         this.fromCoord = fromCoord;
         this.toCoord = toCoord;
-        this.color = color;
         this.type = type;
-        this.capturedPiece = capturedPiece;
+        
+        // this.color = Game.board.getPiece(fromCoord).color;
+        this.capturedPiece = Game.board.getPiece(toCoord);
     }
 }
 
