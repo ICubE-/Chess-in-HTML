@@ -1,6 +1,6 @@
 # Chess-in-HTML
 
-https://icube-.github.io/Chess-in-HTML/
+https://icube-.github.io/My-Chess-Page/
 
 Chess in HTML, CSS, Javascript.
 
