@@ -43,7 +43,9 @@ class Game {
 }
 
 class GameControl {
+    /** @type {Coord} */
     static selectedCoord;
+    /** @type {Array<Move>} */
     static availableMoves;
 
     static unselectPiece() {
@@ -70,12 +72,63 @@ class GameLogic {
     }
 
     static isInCheck(color, board = Game.board) {
-
+        let kingCoord = board.findCoordOfPieces(color, PieceType.KING)[0];
+        return this.isCellUnderAttack(kingCoord, color, board);
     }
     static isAnyPieceMovable(color) {
+        for(let i = 0; i < 8; i++) {
+            for(let j = 0; j < 8; j++) {
+                let crd = new Coord(i, j);
+                let pc = Game.board.getPiece(crd);
+                if(pc != null && pc.color == color) {
+                    if(this.getLegalMoves(crd).length > 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    static isCellUnderAttack(coord, color, board = Game.board) {
+        return this.isCellUnderAttackByKing(coord, color, board)
+            || this.isCellUnderAttackInCross(coord, color, board)
+            || this.isCellUnderAttackInDiagonal(coord, color, board)
+            || this.isCellUnderAttackByKnight(coord, color, board)
+            || this.isCellUnderAttackByPawn(coord, color, board);
+    }
+    static isCellUnderAttackByKing(coord, color, board = Game.board) {
+        let opColor = Color.opponent(color);
+        let rowDiffs = new Array(-1, -1, -1,  0, 0,  1, 1, 1);
+        let colDiffs = new Array(-1,  0,  1, -1, 1, -1, 0, 1);
+        for (let i = 0; i < 8; i++) {
+            let crd = new Coord(coord.r + rowDiffs[i], coord.c + colDiffs[i]);
+            let pc = Game.board.getPiece(crd);
+            if(pc != null && pc.type == PieceType.KING && pc.color == opColor) {
+                return true;
+            }
+        }
+        return false;
+    }
+    static isCellUnderAttackInCross(coord, color, board = Game.board) {
 
     }
-    static isCellUnderAttack(coord, color) {
+    static isCellUnderAttackInDiagonal(coord, color, board = Game.board) {
+
+    }
+    static isCellUnderAttackByKnight(coord, color, board = Game.board) {
+        let opColor = Color.opponent(color);
+        let rowDiffs = new Array(-2, -2, -1, -1,  1, 1,  2, 2);
+        let colDiffs = new Array(-1,  1, -2,  2, -2, 2, -1, 1);
+        for (let i = 0; i < 8; i++) {
+            let crd = new Coord(coord.r + rowDiffs[i], coord.c + colDiffs[i]);
+            let pc = Game.board.getPiece(crd);
+            if(pc != null && pc.type == PieceType.KING && pc.color == opColor) {
+                return true;
+            }
+        }
+        return false;
+    }
+    static isCellUnderAttackByPawn(coord, color, board = Game.board) {
 
     }
 
@@ -117,9 +170,9 @@ class GameLogic {
         let rowDiffs = new Array(-1, -1, -1,  0, 0,  1, 1, 1);
         let colDiffs = new Array(-1,  0,  1, -1, 1, -1, 0, 1);
         for (let i = 0; i < 8; i++) {
-            let r = coord.r + rowDiffs[i], c = coord.c + colDiffs[i];
-            if (this.isCellEmptyOrEnemy(r, c, color)) {
-                pseudoLegalMoves.push(new Move(coord, new Coord(r, c)));
+            let toCoord = new Coord(coord.r + rowDiffs[i], coord.c + colDiffs[i]);
+            if (this.isCellEmptyOrEnemy(toCoord, color)) {
+                pseudoLegalMoves.push(new Move(coord, toCoord));
             }
         }
         // Castling
@@ -144,6 +197,7 @@ class GameLogic {
                 pseudoLegalMoves.push(new MoveCastling(MoveCastling.QUEEN_SIDE_CASTLING, color));
             }
         }
+        return pseudoLegalMoves;
     }
     static hasAnyPieceMovedFrom(coord) {
         let hasMoved = false;
@@ -186,9 +240,9 @@ class GameLogic {
         let rowDiffs = new Array(-2, -2, -1, -1,  1, 1,  2, 2);
         let colDiffs = new Array(-1,  1, -2,  2, -2, 2, -1, 1);
         for (let i = 0; i < 8; i++) {
-            let r = coord.r + rowDiffs[i], c = coord.c + colDiffs[i];
-            if (this.isCellEmptyOrEnemy(r, c, color)) {
-                pseudoLegalMoves.push(new Move(coord, new Coord(r, c)));
+            let toCoord = new Coord(coord.r + rowDiffs[i], coord.c + colDiffs[i]);
+            if (this.isCellEmptyOrEnemy(toCoord, color)) {
+                pseudoLegalMoves.push(new Move(coord, toCoord));
             }
         }
         return pseudoLegalMoves;
@@ -199,6 +253,7 @@ class GameLogic {
         let frontDir = (color == Color.WHITE)? 1 : -1;
         let startCol = (color == Color.WHITE)? 1 : 6;
         let promotionCol = (color == Color.WHITE)? 6 : 1;
+        let enPassantCol = (color == Color.WHITE)? 4 : 3;
 
         let frontCoord = new Coord(coord.r, coord.c + frontDir);
         let twiceFrontCoord = new Coord(coord.r, coord.c + frontDir * 2);
@@ -231,14 +286,30 @@ class GameLogic {
         }
         // En passant
         let sideCoord1 = new Coord(coord.r - 1, coord.c);
-        if (this.isCellEnemy(sideCoord1, color)) {
+        if (coord.c == enPassantCol && this.isCellEnemy(sideCoord1, color)) {
             let enemy = Game.board.getPiece(sideCoord1);
-            /*if(enemy.type == PieceType.PAWN && //enemy.lastMove == this.halfMoveCount && enemy.pawnMoveTwoCells) {
-                let coord = new Coord(row - 1, col + frontDir);
-                coord.push(MoveCode.EN_PASSANT);
-                pseudoLegalMoveCoords.push(coord);
-            }*/
+            if(enemy.type == PieceType.PAWN && this.isLastMovedPieceAt(coord)) {
+                let lastMove = Game.moveHistory[Game.moveHistory.length - 1];
+                if(Math.abs(lastMove.fromCoord.c - lastMove.toCoord.c) == 2) {
+                    pseudoLegalMoves.push(new MoveEnPassant(coord, sideCoord1));
+                }
+            }
         }
+        let sideCoord2 = new Coord(coord.r + 1, coord.c);
+        if (coord.c == enPassantCol && this.isCellEnemy(sideCoord2, color)) {
+            let enemy = Game.board.getPiece(sideCoord2);
+            if(enemy.type == PieceType.PAWN && this.isLastMovedPieceAt(coord)) {
+                let lastMove = Game.moveHistory[Game.moveHistory.length - 1];
+                if(Math.abs(lastMove.fromCoord.c - lastMove.toCoord.c) == 2) {
+                    pseudoLegalMoves.push(new MoveEnPassant(coord, sideCoord2));
+                }
+            }
+        }
+        return pseudoLegalMoves;
+    }
+    static isLastMovedPieceAt(coord) {
+        let lastMove = Game.moveHistory[Game.moveHistory.length - 1];
+        return lastMove.toCoord.equals(coord);
     }
 
     static getLinearPseudoLegalMoves(coord, rowDir, colDir) {
@@ -295,14 +366,19 @@ class MoveCastling extends Move {
         let rowTo = parseInt(castlingSide[4]);
         this.fromCoord = new Coord(4, column);
         this.toCoord = new Coord(rowTo, column);
+        this.movingPiece = Game.board.getPiece(fromCoord);
+        this.capturedPiece = null;
     }
 }
 
 class MoveEnPassant extends Move {
-    constructor(fromCoord, toCoord, color) {
+    constructor(fromCoord, toCoord) {
         this.fromCoord = fromCoord;
         this.toCoord = toCoord;
-        this.color = color;
+
+        this.movingPiece = Game.board.getPiece(fromCoord);
+        this.capturedPiece = Game.board.getPiece(toCoord);
+        // this.color = (fromCoord.c == 4)? Color.WHITE : Color.BLACK;
     }
 }
 
@@ -312,8 +388,9 @@ class MovePromotion extends Move {
         this.toCoord = toCoord;
         this.type = type;
         
-        // this.color = Game.board.getPiece(fromCoord).color;
+        this.movingPiece = Game.board.getPiece(fromCoord);
         this.capturedPiece = Game.board.getPiece(toCoord);
+        // this.color = Game.board.getPiece(fromCoord).color;
     }
 }
 
@@ -432,12 +509,28 @@ class Board {
     promotePiece(coord, type) {
         this.arr[coord.r][coord.c].type = type;
     }
+    findCoordOfPieces(color, type) {
+        let pieceCoords = new Array();
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                let p = this.arr[i][j];
+                if(p.color == color && p.type == type) {
+                    pieceCoords.push(p);
+                }
+            }
+        }
+        return pieceCoords;
+    }
 }
 
 class Coord {
     constructor(r, c) {
         this.r = r;
         this.c = c;
+    }
+
+    equals(another) {
+        return this.r == another.r && this.c == another.c;
     }
 
     isOnBoard() {
