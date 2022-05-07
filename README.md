@@ -1,4 +1,4 @@
-# Chess-in-HTML
+# My-Chess-Page
 
 https://icube-.github.io/My-Chess-Page/
 
